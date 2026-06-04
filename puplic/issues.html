@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>بوابة الإدارة المركزية - متابعة البلاغات</title>
+    
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <style>
+        body {
+            background-color: #f8fafc;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        .navbar-custom {
+            background-color: #ffffff;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+            padding: 15px 20px;
+        }
+        /* حل مشكلة التحذير في السطر 77 بنقل الستايل المدمج إلى هنا */
+        .nav-balancer {
+            width: 100px;
+        }
+        .stat-card {
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.01);
+            transition: transform 0.2s;
+        }
+        .stat-card:hover {
+            transform: translateY(-2px);
+        }
+        .stat-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+        }
+        .dashboard-container {
+            margin-top: 30px;
+            margin-bottom: 50px;
+        }
+        .card-visual {
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 25px;
+            min-height: 380px;
+        }
+        .chart-box {
+            position: relative;
+            height: 250px;
+            width: 100%;
+        }
+        .table-container {
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 20px;
+            margin-top: 30px;
+        }
+        .badge-severity-high { background-color: #fee2e2; color: #991b1b; }
+        .badge-severity-medium { background-color: #fef3c7; color: #92400e; }
+        .badge-severity-low { background-color: #f0fdf4; color: #166534; }
+        
+        .status-pending { color: #dc3545; font-weight: bold; }
+        .status-progress { color: #ffc107; font-weight: bold; }
+        .status-resolved { color: #2dc937; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+<nav class="navbar navbar-custom d-flex justify-content-between align-items-center">
+    <div class="nav-balancer"></div> 
+    
+    <div class="text-center">
+        <h5 class="fw-bold m-0 text-slate-800">نظام إدارة ومتابعة البلاغات الميدانية</h5>
+        <small class="text-muted">المنصة المركزية للمناطق الرقمية الذكية</small>
+    </div>
+    <div>
+        <button class="btn btn-outline-danger btn-sm fw-bold"><i class="fa-solid fa-arrow-right-from-bracket"></i> خروج آمن</button>
+    </div>
+</nav>
+
+<div class="container dashboard-container">
+    
+    <div class="row g-3 mb-4">
+        <div class="col-md-3">
+            <div class="stat-card d-flex align-items-center justify-content-between">
+                <div>
+                    <p class="text-muted small mb-1 fw-semibold">إجمالي البلاغات</p>
+                    <h3 class="fw-bold m-0" id="count-total">0</h3>
+                </div>
+                <div class="stat-icon bg-secondary-subtle text-secondary">
+                    <i class="fa-solid fa-list-check"></i>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card d-flex align-items-center justify-content-between">
+                <div>
+                    <p class="text-muted small mb-1 fw-semibold">قيد الانتظار</p>
+                    <h3 class="fw-bold m-0 text-danger" id="count-pending">0</h3>
+                </div>
+                <div class="stat-icon bg-danger-subtle text-danger">
+                    <i class="fa-solid fa-clock"></i>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card d-flex align-items-center justify-content-between">
+                <div>
+                    <p class="text-muted small mb-1 fw-semibold">قيد التنفيذ</p>
+                    <h3 class="fw-bold m-0 text-warning" id="count-progress">0</h3>
+                </div>
+                <div class="stat-icon bg-warning-subtle text-warning">
+                    <i class="fa-solid fa-spinner fa-spin-pulse"></i>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card d-flex align-items-center justify-content-between">
+                <div>
+                    <p class="text-muted small mb-1 fw-semibold">تم الإصلاح</p>
+                    <h3 class="fw-bold m-0 text-success" id="count-resolved">0</h3>
+                </div>
+                <div class="stat-icon bg-success-subtle text-success">
+                    <i class="fa-solid fa-circle-check"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-md-6">
+            <div class="card-visual">
+                <h6 class="fw-bold text-dark mb-3"><i class="fa-solid fa-chart-pie text-primary"></i> توزيع البلاغات حسب الحالة الحالية</h6>
+                <div class="chart-box">
+                    <canvas id="statusChart"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card-visual">
+                <h6 class="fw-bold text-dark mb-3"><i class="fa-solid fa-chart-bar text-success"></i> البلاغات المستلمة حسب المنطقة الجغرافية</h6>
+                <div class="chart-box">
+                    <canvas id="regionChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="table-container">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h5 class="fw-bold m-0 text-dark"><i class="fa-solid fa-folder-open text-warning"></i> سجل البلاغات الواردة الحية</h5>
+            <span class="badge bg-primary">تحديث تلقائي مفعّل</span>
+        </div>
+        <div class="table-responsive">
+            <table class="table table-hover align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th>نوع المشكلة</th>
+                        <th>المنطقة</th>
+                        <th>الوصف الفني</th>
+                        <th>الخطورة</th>
+                        <th>الإحداثيات (GPS)</th>
+                        <th>تغيير الحالة الإدارية</th>
+                    </tr>
+                </thead>
+                <tbody id="issuesTableBody">
+                    <tr>
+                        <td colspan="6" class="text-center text-muted py-4">
+                            <i class="fa-solid fa-spinner fa-spin fa-2x mb-2 d-block"></i> جاري مزامنة البيانات حياً...
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+</div>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import { getFirestore, collection, onSnapshot, doc, updateDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+    // إعدادات مشروع الـ Firebase Config
+    const firebaseConfig = {
+        apiKey: "YOUR_API_KEY",
+        authDomain: "smart-street-dashboard-315dc.firebaseapp.com",
+        projectId: "smart-street-dashboard-315dc",
+        storageBucket: "smart-street-dashboard-315dc.appspot.com",
+        messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+        appId: "YOUR_APP_ID"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    let statusChartObj = null;
+    let regionChartObj = null;
+
+    function updateCharts(stats, regionStats) {
+        const ctxStatus = document.getElementById('statusChart').getContext('2d');
+        const ctxRegion = document.getElementById('regionChart').getContext('2d');
+
+        if (statusChartObj) statusChartObj.destroy();
+        statusChartObj = new Chart(ctxStatus, {
+            type: 'doughnut',
+            data: {
+                labels: ['قيد الانتظار', 'قيد التنفيذ', 'تم الإصلاح'],
+                datasets: [{
+                    data: [stats.pending, stats.progress, stats.resolved],
+                    backgroundColor: ['#dc3545', '#ffc107', '#2dc937']
+                }]
+            },
+            options: { responsive: true, maintainAspectRatio: false }
+        });
+
+        if (regionChartObj) regionChartObj.destroy();
+        regionChartObj = new Chart(ctxRegion, {
+            type: 'bar',
+            data: {
+                labels: Object.keys(regionStats),
+                datasets: [{
+                    label: 'عدد البلاغات المرفوعة',
+                    data: Object.values(regionStats),
+                    backgroundColor: '#2b5998'
+                }]
+            },
+            options: { 
+                responsive: true, 
+                maintainAspectRatio: false,
+                scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } }
+            }
+        });
+    }
+
+    // دالة تغيير حالة المستند داخل جدول المتابعة
+    window.changeIssueStatus = async function(id, newStatus) {
+        try {
+            const docRef = doc(db, "infrastructure_issues", id);
+            await updateDoc(docRef, { status: newStatus });
+        } catch (error) {
+            console.error("Error updating status: ", error);
+            alert("فشل تحديث حالة البلاغ بقاعدة البيانات.");
+        }
+    };
+
+    const issuesCollection = collection(db, "infrastructure_issues");
+    
+    // المزامنة الحية وعرض السجلات والكروت والرسومات البيانية
+    onSnapshot(issuesCollection, (snapshot) => {
+        const tableBody = document.getElementById("issuesTableBody");
+        tableBody.innerHTML = ""; 
+
+        let total = 0;
+        let pending = 0;
+        let progress = 0;
+        let resolved = 0;
+
+        const regionStats = { "الشيخ زايد": 0, "وسط البلد": 0, "الحي الأول": 0, "مدينة نصر": 0, "التجمع الخامس": 0, "الجونة": 0, "الساحل الشمالي": 0 };
+
+        if (snapshot.empty) {
+            tableBody.innerHTML = `<tr><td colspan="6" class="text-center text-muted py-3">لا توجد بلاغات مسجلة حالياً في النظام.</td></tr>`;
+        }
+
+        snapshot.forEach((doc) => {
+            total++;
+            const data = doc.data();
+            const id = doc.id;
+
+            const currentStatus = data.status || "قيد الانتظار";
+            if (currentStatus === "قيد الانتظار") pending++;
+            else if (currentStatus === "قيد التنفيذ") progress++;
+            else if (currentStatus === "تم الإصلاح") resolved++;
+
+            if (data.region && regionStats[data.region] !== undefined) {
+                regionStats[data.region]++;
+            } else if (data.region) {
+                regionStats[data.region] = 1; 
+            }
+
+            let severityClass = "badge-severity-low";
+            if (data.severity === "حرجة وعاجلة جداً") severityClass = "badge-severity-high";
+            else if (data.severity === "متوسطة الأهمية") severityClass = "badge-severity-medium";
+
+            const row = document.createElement("tr");
+            row.innerHTML = `
+                <td class="fw-bold">${data.issueType || 'غير محدد'}</td>
+                <td><i class="fa-solid fa-map-pin text-secondary"></i> ${data.region || 'غير محدد'}</td>
+                <td class="small text-muted">${data.description || 'بدون وصف عيني'}</td>
+                <td><span class="badge ${severityClass} p-2">${data.severity || 'اعتيادية'}</span></td>
+                <td>
+                    <code class="text-dark">${data.coordinates || 'لم تلتقط'}</code>
+                </td>
+                <td>
+                    <select class="form-select form-select-sm fw-semibold" onchange="changeIssueStatus('${id}', this.value)">
+                        <option value="قيد الانتظار" class="text-danger" ${currentStatus === 'قيد الانتظار' ? 'selected' : ''}>🔴 قيد الانتظار</option>
+                        <option value="قيد التنفيذ" class="text-warning" ${currentStatus === 'قيد التنفيذ' ? 'selected' : ''}>🟡 قيد التنفيذ</option>
+                        <option value="تم الإصلاح" class="text-success" ${currentStatus === 'تم الإصلاح' ? 'selected' : ''}>🟢 تم الإصلاح</option>
+                    </select>
+                </td>
+            `;
+            tableBody.appendChild(row);
+        });
+
+        document.getElementById("count-total").innerText = total;
+        document.getElementById("count-pending").innerText = pending;
+        document.getElementById("count-progress").innerText = progress;
+        document.getElementById("count-resolved").innerText = resolved;
+
+        updateCharts({ pending, progress, resolved }, regionStats);
+    });
+</script>
+
+</body>
+</html>

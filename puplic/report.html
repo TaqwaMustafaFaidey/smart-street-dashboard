@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تقديم بلاغ جديد - Smart Street</title>
+
+    <!-- FIX: @import inside <style> was malformed — moved to proper <link> tag -->
+    <!-- FIX: wght=400 was wrong syntax — correct is wght@400 -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <style>
+        body { font-family: 'Cairo', sans-serif; background-color: #f1f5f9; color: #1e293b; }
+
+        /* FIX: shadow-xs does not exist in Tailwind v3 */
+
+        .geo-status-text { font-size: 10.5px; margin-top: 5px; display: block; font-weight: 500; }
+
+        /* Priority radio cards */
+        .priority-option input[type="radio"] { display: none; }
+        .priority-label {
+            display: flex; align-items: center; justify-content: center; gap: 6px;
+            padding: 9px 12px; border-radius: 8px; border: 1.5px solid #E2E8F0;
+            background: #F8FAFC; font-size: 11.5px; font-weight: 700;
+            color: #64748B; cursor: pointer; transition: all 0.15s; text-align: center;
+        }
+        .priority-label:hover { border-color: #94A3B8; background: #fff; }
+        .priority-option input[type="radio"]:checked + .priority-label.low  { background: #F0FDF4; border-color: #86EFAC; color: #166534; }
+        .priority-option input[type="radio"]:checked + .priority-label.mid  { background: #FFFBEB; border-color: #FCD34D; color: #92400E; }
+        .priority-option input[type="radio"]:checked + .priority-label.high { background: #FFF1F2; border-color: #FCA5A5; color: #991B1B; }
+
+        /* Submit button states */
+        .submit-btn { transition: background 0.15s, transform 0.1s, opacity 0.15s; }
+        .submit-btn:active:not(:disabled) { transform: scale(0.99); }
+        .submit-btn:disabled { opacity: 0.55; cursor: not-allowed; }
+        .submit-btn .spinner {
+            width: 13px; height: 13px;
+            border: 2px solid rgba(255,255,255,0.4); border-top-color: #fff;
+            border-radius: 50%; animation: spin 0.6s linear infinite; display: none;
+        }
+        .submit-btn.loading .spinner { display: inline-block; }
+        .submit-btn.loading .btn-text { opacity: 0.7; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* Form fields */
+        select, textarea, input[type="text"] {
+            width: 100%; background: #F8FAFC; border: 1px solid #E2E8F0;
+            border-radius: 8px; padding: 10px 13px;
+            font-size: 12.5px; font-family: 'Cairo', sans-serif;
+            font-weight: 600; color: #1e293b;
+            outline: none; transition: border-color 0.15s, box-shadow 0.15s, background 0.15s;
+            -webkit-appearance: none; appearance: none;
+        }
+        select {
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2394A3B8' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+            background-repeat: no-repeat; background-position: left 12px center; padding-left: 36px;
+        }
+        select:focus, textarea:focus, input[type="text"]:focus {
+            border-color: #3B82F6; background: #fff;
+            box-shadow: 0 0 0 3px rgba(59,130,246,0.12);
+        }
+        textarea { resize: vertical; min-height: 88px; font-weight: 500; line-height: 1.6; }
+
+        .field-error { border-color: #EF4444 !important; box-shadow: 0 0 0 3px rgba(239,68,68,0.1) !important; }
+        .error-msg { font-size: 10.5px; color: #DC2626; font-weight: 600; margin-top: 4px; display: none; }
+        .error-msg.visible { display: block; }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col antialiased">
+
+    <!-- ══════════════════ HEADER ══════════════════ -->
+    <!-- FIX: shadow-xs → shadow-sm -->
+    <header class="bg-white border-b border-slate-200 sticky top-0 z-50 px-6 lg:px-8 py-4 flex justify-between items-center shadow-sm">
+        <div class="flex items-center gap-3">
+            <div class="w-10 h-10 bg-blue-50 border border-blue-100 rounded-xl flex items-center justify-center">
+                <i class="fa-solid fa-circle-dot text-blue-600 text-base animate-pulse"></i>
+            </div>
+            <div>
+                <h1 class="text-sm font-bold text-slate-900 leading-tight">بوابة المواطن لتقديم البلاغات الذكية</h1>
+                <p class="text-[11px] text-slate-400 font-medium">رصد فوري لأعطال ومشاكل البنية التحتية بالطرق</p>
+            </div>
+        </div>
+        <nav class="hidden sm:flex gap-6 text-xs font-bold text-slate-500">
+            <a href="index.html" class="hover:text-blue-600 transition flex items-center gap-1">
+                <i class="fa-solid fa-house text-[10px]"></i> الرئيسية
+            </a>
+            <a href="report.html" class="text-blue-600 border-b-2 border-blue-600 pb-1 flex items-center gap-1">
+                <i class="fa-solid fa-pen-to-square text-[10px]"></i> إبلاغ عن مشكلة
+            </a>
+            <a href="index.html#all-archive" class="hover:text-blue-600 transition flex items-center gap-1">
+                <i class="fa-solid fa-box-archive text-[10px]"></i> أرشيف الشكاوى
+            </a>
+        </nav>
+    </header>
+
+    <!-- ══════════════════ MAIN ══════════════════ -->
+    <main class="max-w-xl mx-auto p-5 w-full flex-1 mt-6 mb-10">
+        <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-6">
+
+            <div class="border-b border-slate-100 pb-4">
+                <h2 class="text-sm font-bold text-slate-900 flex items-center gap-2">
+                    <i class="fa-solid fa-pen-to-square text-blue-600"></i>
+                    نموذج تسجيل بلاغ ميداني جديد
+                </h2>
+                <p class="text-[11px] text-slate-400 mt-1.5 font-medium">يرجى ملء الحقول التالية بدقة لضمان سرعة توجيه فريق الصيانة</p>
+            </div>
+
+            <!-- ══ Success Banner (hidden by default) ══ -->
+            <div id="success-banner" class="hidden bg-green-50 border border-green-200 rounded-xl p-4 flex items-start gap-3">
+                <i class="fa-solid fa-circle-check text-green-600 text-lg mt-0.5 flex-shrink-0"></i>
+                <div>
+                    <p class="text-xs font-bold text-green-800">تم تسجيل بلاغك بنجاح!</p>
+                    <p class="text-[11px] text-green-700 mt-0.5 font-medium">تم رفعه للسيرفر المركزي وجاري توجيهه لفريق الصيانة. سيتم تحويلك تلقائياً...</p>
+                </div>
+            </div>
+
+            <!-- ══ Error Banner (hidden by default) ══ -->
+            <div id="error-banner" class="hidden bg-red-50 border border-red-200 rounded-xl p-4 flex items-start gap-3">
+                <i class="fa-solid fa-circle-xmark text-red-500 text-lg mt-0.5 flex-shrink-0"></i>
+                <div>
+                    <p class="text-xs font-bold text-red-800">فشل رفع البلاغ</p>
+                    <p id="error-msg-text" class="text-[11px] text-red-700 mt-0.5 font-medium">حدث خطأ أثناء الاتصال بـ Firebase، يرجى مراجعة الاتصال والمحاولة مرة أخرى.</p>
+                </div>
+            </div>
+
+            <form id="report-form" class="space-y-5" novalidate>
+
+                <!-- Issue Type -->
+                <div class="space-y-1.5">
+                    <label for="issue-type" class="block text-xs font-bold text-slate-700">نوع المشكلة المكتشفة</label>
+                    <select id="issue-type">
+                        <option value="حفرة في الطريق">حفرة خطيرة في الطريق (Pothole)</option>
+                        <option value="الشارع مكسر">الشارع مكسر وبحاجة لرصف</option>
+                        <option value="عطل في بلاعة">عطل أو انسداد في بلاعة الصرف</option>
+                        <option value="عمود إنارة مش شغال">عمود إنارة مطفأ / عطل كهربائي</option>
+                        <option value="عمود إنارة واقع في الأرض">عمود إنارة سقط على الأرض (خطر)</option>
+                        <option value="تجمع مياه بسبب المطر">تجمع مياه كثيف يعيق الحركة</option>
+                    </select>
+                </div>
+
+                <!-- Description -->
+                <div class="space-y-1.5">
+                    <label for="issue-desc" class="block text-xs font-bold text-slate-700">وصف تفصيلي وعيني للمشكلة</label>
+                    <textarea id="issue-desc"
+                        placeholder="مثال: العمود يخرج شرر كهربائي بجوار الميدان الرئيسي، خطر مباشر على المشاة..."></textarea>
+                </div>
+
+                <!-- Governorate -->
+                <div class="space-y-1.5">
+                    <label for="issue-gov" class="block text-xs font-bold text-slate-700">النطاق أو المنطقة الجغرافية الكبرى</label>
+                    <select id="issue-gov">
+                        <option value="التجمع الخامس">التجمع الخامس</option>
+                        <option value="الشيخ زايد">الشيخ زايد</option>
+                        <option value="الجونة">الجونة</option>
+                        <option value="الساحل الشمالي">الساحل الشمالي</option>
+                        <option value="المنتزه">المنتزه</option>
+                    </select>
+                </div>
+
+                <!-- Location + GPS -->
+                <div class="space-y-1.5">
+                    <label for="issue-loc" class="block text-xs font-bold text-slate-700">العنوان التفصيلي / اللوكيشن الدقيق</label>
+                    <div class="flex gap-2">
+                        <input type="text" id="issue-loc"
+                            placeholder="مثال: شارع التسعين أمام مول..." />
+                        <!-- FIX: type="button" to prevent accidental form submit -->
+                        <button type="button" id="geo-btn"
+                            class="flex-shrink-0 bg-slate-100 text-slate-700 border border-slate-200 px-3 rounded-lg text-[11px] font-bold hover:bg-slate-200 active:scale-95 transition flex items-center gap-1.5 whitespace-nowrap">
+                            <i class="fa-solid fa-location-crosshairs text-blue-600 text-xs"></i>
+                            GPS
+                        </button>
+                    </div>
+                    <span id="geo-status" class="geo-status-text text-slate-400">
+                        <i class="fa-regular fa-circle-dot text-[10px] ml-1"></i>
+                        يمكنك الكتابة النصية أو استخدام الـ GPS لجلب الإحداثيات آلياً
+                    </span>
+                    <!-- FIX: Added validation error message for location field -->
+                    <span id="loc-error" class="error-msg">
+                        <i class="fa-solid fa-triangle-exclamation ml-1"></i>
+                        يرجى إدخال العنوان أو تحديد الموقع عبر GPS
+                    </span>
+                </div>
+
+                <!-- Priority — FIX: replaced raw radio group with styled card-style selectors -->
+                <div class="space-y-2">
+                    <label class="block text-xs font-bold text-slate-700">درجة خطورة وأولوية البلاغ</label>
+                    <div class="grid grid-cols-3 gap-2">
+                        <div class="priority-option">
+                            <input type="radio" name="priority" id="p-low" value="منخفضة">
+                            <label class="priority-label low" for="p-low">
+                                <i class="fa-solid fa-circle-check text-xs"></i> اعتيادية
+                            </label>
+                        </div>
+                        <div class="priority-option">
+                            <input type="radio" name="priority" id="p-mid" value="متوسطة" checked>
+                            <label class="priority-label mid" for="p-mid">
+                                <i class="fa-solid fa-circle-exclamation text-xs"></i> متوسطة
+                            </label>
+                        </div>
+                        <div class="priority-option">
+                            <input type="radio" name="priority" id="p-high" value="عاجلة جداً">
+                            <label class="priority-label high" for="p-high">
+                                <i class="fa-solid fa-triangle-exclamation text-xs"></i> عاجلة
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Submit -->
+                <!-- FIX: gave submit button a stable id instead of relying on querySelector('button') -->
+                <button type="submit" id="submit-btn"
+                    class="submit-btn w-full bg-blue-600 text-white font-bold py-3 rounded-xl hover:bg-blue-700 text-xs shadow-sm mt-1 flex items-center justify-center gap-2">
+                    <div class="spinner"></div>
+                    <i class="fa-solid fa-paper-plane btn-icon text-xs"></i>
+                    <span class="btn-text">إرسال البلاغ وتثبيت الطابع الزمني والمكاني</span>
+                </button>
+
+            </form>
+        </div>
+    </main>
+
+    <!-- ══════════════════ SCRIPT ══════════════════ -->
+    <!-- Firebase dependency kept as-is per requirement -->
+    <script type="module">
+        import { createNewReport } from "./js/firebase_db.js";
+
+        // ─── DOM refs ──────────────────────────────────────────────
+        const geoBtn       = document.getElementById('geo-btn');
+        const geoStatus    = document.getElementById('geo-status');
+        const issueLocInput= document.getElementById('issue-loc');
+        const locError     = document.getElementById('loc-error');
+        const submitBtn    = document.getElementById('submit-btn');
+        const successBanner= document.getElementById('success-banner');
+        const errorBanner  = document.getElementById('error-banner');
+        const errorMsgText = document.getElementById('error-msg-text');
+
+        // ─── GPS ───────────────────────────────────────────────────
+        geoBtn.addEventListener('click', () => {
+            if (!navigator.geolocation) {
+                setGeoStatus('error', 'المتصفح الحالي لا يدعم ميزة تحديد الموقع التلقائي');
+                return;
+            }
+            setGeoStatus('loading', 'جاري التقاط إحداثيات الـ GPS...');
+            geoBtn.disabled = true;
+
+            // FIX: Added timeout option — prevents infinite loading if GPS hangs
+            navigator.geolocation.getCurrentPosition(
+                (position) => {
+                    const lat = position.coords.latitude.toFixed(5);
+                    const lon = position.coords.longitude.toFixed(5);
+                    issueLocInput.value = `إحداثيات حية (${lat}, ${lon})`;
+                    setGeoStatus('success', 'تم التقاط موقعك الحالي بنجاح وحقنه في الاستمارة');
+                    geoBtn.disabled = false;
+                    clearLocError();
+                },
+                (err) => {
+                    const msgs = {
+                        1: 'تم رفض الإذن — يرجى السماح بالوصول للموقع في إعدادات المتصفح',
+                        2: 'تعذّر تحديد الموقع، يرجى كتابة العنوان يدوياً',
+                        3: 'انتهت المهلة — يرجى المحاولة مرة أخرى أو الكتابة يدوياً'
+                    };
+                    setGeoStatus('error', msgs[err.code] || 'فشل التقاط الموقع، يرجى الكتابة يدوياً');
+                    geoBtn.disabled = false;
+                },
+                // FIX: Added timeout so GPS doesn't hang forever
+                { timeout: 10000, enableHighAccuracy: true, maximumAge: 0 }
+            );
+        });
+
+        function setGeoStatus(type, msg) {
+            const icons = {
+                loading: '<i class="fa-solid fa-spinner fa-spin text-blue-500 ml-1 text-[10px]"></i>',
+                success: '<i class="fa-solid fa-location-dot text-green-600 ml-1 text-[10px]"></i>',
+                error:   '<i class="fa-solid fa-circle-xmark text-red-500 ml-1 text-[10px]"></i>',
+                default: '<i class="fa-regular fa-circle-dot text-slate-400 ml-1 text-[10px]"></i>',
+            };
+            const colors = { loading: 'text-blue-500', success: 'text-green-700', error: 'text-red-600', default: 'text-slate-400' };
+            geoStatus.className = `geo-status-text font-semibold ${colors[type] || colors.default}`;
+            geoStatus.innerHTML = (icons[type] || icons.default) + msg;
+        }
+
+        // ─── Validation helpers ────────────────────────────────────
+        function clearLocError() {
+            issueLocInput.classList.remove('field-error');
+            locError.classList.remove('visible');
+        }
+
+        issueLocInput.addEventListener('input', () => {
+            if (issueLocInput.value.trim()) clearLocError();
+        });
+
+        // ─── Form submit ───────────────────────────────────────────
+        document.getElementById('report-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            // FIX: Explicit client-side validation for required location field
+            const loc = issueLocInput.value.trim();
+            if (!loc) {
+                issueLocInput.classList.add('field-error');
+                locError.classList.add('visible');
+                issueLocInput.focus();
+                issueLocInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                return;
+            }
+
+            clearLocError();
+            setLoading(true);
+            errorBanner.classList.add('hidden');
+            successBanner.classList.add('hidden');
+
+            const reportData = {
+                type:        document.getElementById('issue-type').value,
+                desc:        document.getElementById('issue-desc').value.trim(),
+                location:    loc,
+                governorate: document.getElementById('issue-gov').value,
+                priority:    document.querySelector('input[name="priority"]:checked').value,
+                status:      'Open'
+            };
+
+            try {
+                // Firebase call — kept exactly as original
+                await createNewReport(reportData);
+
+                // FIX: replaced alert() with inline success banner + smooth redirect
+                successBanner.classList.remove('hidden');
+                successBanner.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+                // Reset form
+                document.getElementById('report-form').reset();
+                document.getElementById('p-mid').checked = true;
+                setGeoStatus('default', 'يمكنك الكتابة النصية أو استخدام الـ GPS لجلب الإحداثيات آلياً');
+
+                // Redirect after 2.5s
+                setTimeout(() => {
+                    window.location.href = 'index.html#all-archive';
+                }, 2500);
+
+            } catch (err) {
+                // FIX: replaced alert() with inline error banner showing actual error
+                console.error('Firebase createNewReport error:', err);
+                const detail = err?.message ? ` (${err.message})` : '';
+                errorMsgText.textContent = `حدث خطأ أثناء الاتصال بـ Firebase${detail}، يرجى مراجعة الاتصال والمحاولة مرة أخرى.`;
+                errorBanner.classList.remove('hidden');
+                errorBanner.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                setLoading(false);
+            }
+        });
+
+        // ─── Loading state ─────────────────────────────────────────
+        function setLoading(state) {
+            submitBtn.disabled = state;
+            submitBtn.classList.toggle('loading', state);
+            const icon = submitBtn.querySelector('.btn-icon');
+            if (icon) icon.style.display = state ? 'none' : '';
+        }
+    </script>
+</body>
+</html>
