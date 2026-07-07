@@ -18,6 +18,10 @@
             justify-content: center;
             padding: 20px;
         }
+        .login-wrapper {
+            width: 100%;
+            max-width: 420px;
+        }
         .login-card {
             background: #ffffff;
             border: none;
@@ -25,7 +29,6 @@
             box-shadow: 0 20px 40px rgba(0,0,0,0.3);
             padding: 40px;
             width: 100%;
-            max-width: 420px;
         }
         .brand-logo {
             font-size: 24px;
@@ -69,40 +72,61 @@
             border-radius: 8px;
             padding: 12px;
         }
+        /* تنسيق زر الرجوع المتناسق مع التصميم الداكن للموقع */
+        .btn-back {
+            color: #94a3b8;
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 500;
+            transition: color 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+        }
+        .btn-back:hover {
+            color: #f8fafc;
+        }
     </style>
 </head>
 <body>
 
-<div class="login-card">
-    <div class="brand-logo">
-        <i class="fa-solid fa-helmet-safety text-info me-2"></i>بوابة<span> العمال</span>
+<div class="login-wrapper">
+    <div class="mb-3 text-end">
+        <a href="index.html" class="btn-back">
+            الرجوع للرئيسية <i class="fa-solid fa-arrow-left ms-2"></i>
+        </a>
     </div>
-    <p class="text-muted text-center small mb-4">نظام تسجيل دخول الفنيين ومقدمي الخدمة الميدانية</p>
-    
-    <div class="alert alert-danger alert-msg text-center mb-3" id="msg" role="alert"></div>
 
-    <form id="workerLoginForm">
-        <div class="mb-3">
-            <label for="loginPhone" class="form-label fw-semibold small text-secondary">رقم الهاتف</label>
-            <div class="input-group">
-                <span class="input-group-text bg-light text-muted"><i class="fa-solid fa-phone"></i></span>
-                <input type="tel" id="loginPhone" class="form-control bg-light" placeholder="01xxxxxxxxx" required>
-            </div>
+    <div class="login-card">
+        <div class="brand-logo">
+            <i class="fa-solid fa-helmet-safety text-info me-2"></i>بوابة<span> العمال</span>
         </div>
+        <p class="text-muted text-center small mb-4">نظام تسجيل دخول الفنيين ومقدمي الخدمة الميدانية</p>
         
-        <div class="mb-4">
-            <label for="password" class="form-label fw-semibold small text-secondary">كلمة المرور</label>
-            <div class="input-group">
-                <span class="input-group-text bg-light text-muted"><i class="fa-solid fa-lock"></i></span>
-                <input type="password" id="password" class="form-control bg-light" placeholder="••••••••" required>
-            </div>
-        </div>
+        <div class="alert alert-danger alert-msg text-center mb-3" id="msg" role="alert"></div>
 
-        <button type="submit" id="submitBtn" class="btn btn-worker w-100">
-            <span>دخول للنظام</span> 
-            <i class="fa-solid fa-arrow-right-to-bracket ms-1"></i>
-        </button>
-    </form>
+        <form id="workerLoginForm">
+            <div class="mb-3">
+                <label for="loginPhone" class="form-label fw-semibold small text-secondary">رقم الهاتف</label>
+                <div class="input-group">
+                    <span class="input-group-text bg-light text-muted"><i class="fa-solid fa-phone"></i></span>
+                    <input type="tel" id="loginPhone" class="form-control bg-light" placeholder="01xxxxxxxxx" required>
+                </div>
+            </div>
+            
+            <div class="mb-4">
+                <label for="password" class="form-label fw-semibold small text-secondary">كلمة المرور</label>
+                <div class="input-group">
+                    <span class="input-group-text bg-light text-muted"><i class="fa-solid fa-lock"></i></span>
+                    <input type="password" id="password" class="form-control bg-light" placeholder="••••••••" required>
+                </div>
+            </div>
+
+            <button type="submit" id="submitBtn" class="btn btn-worker w-100">
+                <span>دخول للنظام</span> 
+                <i class="fa-solid fa-arrow-right-to-bracket ms-1"></i>
+            </button>
+        </form>
+    </div>
 </div>
 
 <script type="module">

@@ -17,6 +17,10 @@
             justify-content: center;
             padding: 20px;
         }
+        .login-wrapper {
+            width: 100%;
+            max-width: 420px;
+        }
         .login-card {
             background: #ffffff;
             border: none;
@@ -24,7 +28,6 @@
             box-shadow: 0 20px 40px rgba(0,0,0,0.25);
             padding: 40px;
             width: 100%;
-            max-width: 420px;
         }
         .brand-logo {
             font-size: 26px;
@@ -68,40 +71,62 @@
             border-radius: 8px;
             padding: 12px;
         }
+        /* تنسيق زر الرجوع */
+        .btn-back {
+            color: #94a3b8;
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 500;
+            transition: color 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+        }
+        .btn-back:hover {
+            color: #f8fafc;
+        }
     </style>
 </head>
 <body>
 
-<div class="login-card">
-    <div class="brand-logo">
-        <i class="fa-solid fa-shield-halved text-danger me-2"></i>Smart<span>Dashboard</span>
+<div class="login-wrapper">
+    <!-- ⬅️ زر الرجوع للصفحة الرئيسية مضاف هنا بشكل أنيق ومحاذي لليمين فوق الكارت -->
+    <div class="mb-3 text-end">
+        <a href="index.html" class="btn-back">
+            الرجوع للرئيسية <i class="fa-solid fa-arrow-left ms-2"></i>
+        </a>
     </div>
-    <p class="text-muted text-center small mb-4">بوابة تسجيل دخول المراقبين والأدمن فقط</p>
-    
-    <div class="alert alert-danger alert-error text-center mb-3" id="errorMessage" role="alert"></div>
 
-    <form id="adminLoginForm">
-        <div class="mb-3">
-            <label for="adminEmail" class="form-label fw-semibold small text-secondary">بريد الأدمن الإلكتروني</label>
-            <div class="input-group">
-                <span class="input-group-text bg-light text-muted"><i class="fa-solid fa-user-gear"></i></span>
-                <input type="email" id="adminEmail" class="form-control bg-light" placeholder="admin@street.com" required autocomplete="email">
-            </div>
+    <div class="login-card">
+        <div class="brand-logo">
+            <i class="fa-solid fa-shield-halved text-danger me-2"></i>Smart<span>Dashboard</span>
         </div>
+        <p class="text-muted text-center small mb-4">بوابة تسجيل دخول المراقبين والأدمن فقط</p>
         
-        <div class="mb-4">
-            <label for="adminPassword" class="form-label fw-semibold small text-secondary">كلمة المرور</label>
-            <div class="input-group">
-                <span class="input-group-text bg-light text-muted"><i class="fa-solid fa-key"></i></span>
-                <input type="password" id="adminPassword" class="form-control bg-light" placeholder="••••••••" required autocomplete="current-password">
-            </div>
-        </div>
+        <div class="alert alert-danger alert-error text-center mb-3" id="errorMessage" role="alert"></div>
 
-        <button type="submit" id="submitBtn" class="btn btn-login w-100">
-            <span>دخول للنظام المركزي</span> 
-            <i class="fa-solid fa-arrow-right-to-bracket ms-1"></i>
-        </button>
-    </form>
+        <form id="adminLoginForm">
+            <div class="mb-3">
+                <label for="adminEmail" class="form-label fw-semibold small text-secondary">بريد الأدمن الإلكتروني</label>
+                <div class="input-group">
+                    <span class="input-group-text bg-light text-muted"><i class="fa-solid fa-user-gear"></i></span>
+                    <input type="email" id="adminEmail" class="form-control bg-light" placeholder="admin@street.com" required autocomplete="email">
+                </div>
+            </div>
+            
+            <div class="mb-4">
+                <label for="adminPassword" class="form-label fw-semibold small text-secondary">كلمة المرور</label>
+                <div class="input-group">
+                    <span class="input-group-text bg-light text-muted"><i class="fa-solid fa-key"></i></span>
+                    <input type="password" id="adminPassword" class="form-control bg-light" placeholder="••••••••" required autocomplete="current-password">
+                </div>
+            </div>
+
+            <button type="submit" id="submitBtn" class="btn btn-login w-100">
+                <span>دخول للنظام المركزي</span> 
+                <i class="fa-solid fa-arrow-right-to-bracket ms-1"></i>
+            </button>
+        </form>
+    </div>
 </div>
 
 <script type="module">
