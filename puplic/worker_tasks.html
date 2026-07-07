@@ -1,51 +1,76 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>بوابة العامل - المهام الميدانية</title>
-    
+
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
+
     <style>
         body {
             background-color: #f1f5f9;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         }
+
         .navbar-worker {
             background-color: #1e293b;
             color: #ffffff;
             padding: 15px 20px;
-            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
         }
+
         .task-card {
             background: #ffffff;
             border: none;
             border-radius: 12px;
             padding: 20px;
             margin-bottom: 20px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.02);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.02);
             border-right: 6px solid #cbd5e1;
             transition: transform 0.2s;
         }
+
         .task-card:hover {
             transform: translateY(-2px);
         }
-        /* تلوين أطراف الكروت حسب حالة البلاغ */
-        .border-pending { border-right-color: #ef4444; }
-        .border-progress { border-right-color: #f59e0b; }
-        .border-resolved { border-right-color: #10b981; }
 
-        .badge-severity-high { background-color: #fee2e2; color: #991b1b; }
-        .badge-severity-medium { background-color: #fef3c7; color: #92400e; }
-        .badge-severity-low { background-color: #f0fdf4; color: #166534; }
+        /* تلوين أطراف الكروت حسب حالة البلاغ */
+        .border-pending {
+            border-right-color: #ef4444;
+        }
+
+        .border-progress {
+            border-right-color: #f59e0b;
+        }
+
+        .border-resolved {
+            border-right-color: #10b981;
+        }
+
+        .badge-severity-high {
+            background-color: #fee2e2;
+            color: #991b1b;
+        }
+
+        .badge-severity-medium {
+            background-color: #fef3c7;
+            color: #92400e;
+        }
+
+        .badge-severity-low {
+            background-color: #f0fdf4;
+            color: #166534;
+        }
 
         .btn-status-update {
             font-weight: 600;
             font-size: 14px;
             border-radius: 8px;
         }
+
         .gps-box {
             background-color: #f8fafc;
             border: 1px dashed #cbd5e1;
@@ -55,174 +80,200 @@
         }
     </style>
 </head>
+
 <body>
 
-<nav class="navbar navbar-worker d-flex justify-content-between align-items-center">
-    <div class="d-flex align-items-center gap-2">
-        <div class="bg-info text-dark rounded-circle d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
-            <i class="fa-solid fa-user-gear"></i>
+    <nav class="navbar navbar-worker d-flex justify-content-between align-items-center">
+        <div class="d-flex align-items-center gap-2">
+            <div class="bg-info text-dark rounded-circle d-flex align-items-center justify-content-center"
+                style="width: 40px; height: 40px;">
+                <i class="fa-solid fa-user-gear"></i>
+            </div>
+            <div>
+                <h6 class="m-0 fw-bold" id="workerDisplayName">جاري التحميل...</h6>
+                <small class="text-info" id="workerDisplayPhone">01xxxxxxxxx</small>
+            </div>
         </div>
+
+        <div class="text-center d-none d-md-block">
+            <h5 class="fw-bold m-0">بوابة المهام الميدانية</h5>
+        </div>
+
         <div>
-            <h6 class="m-0 fw-bold" id="workerDisplayName">جاري التحميل...</h6>
-            <small class="text-info" id="workerDisplayPhone">01xxxxxxxxx</small>
+            <button id="workerLogoutBtn" class="btn btn-outline-light btn-sm fw-bold">
+                <i class="fa-solid fa-arrow-right-from-bracket"></i> خروج
+            </button>
         </div>
-    </div>
-    
-    <div class="text-center d-none d-md-block">
-        <h5 class="fw-bold m-0">بوابة المهام الميدانية</h5>
-    </div>
+    </nav>
 
-    <div>
-        <button id="workerLogoutBtn" class="btn btn-outline-light btn-sm fw-bold">
-            <i class="fa-solid fa-arrow-right-from-bracket"></i> خروج
-        </button>
-    </div>
-</nav>
+    <div class="container my-4">
 
-<div class="container my-4">
-    
-    <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
-        <h5 class="fw-bold text-dark m-0">
-            <i class="fa-solid fa-briefcase text-secondary me-1"></i> قائمة البلاغات الحالية
-        </h5>
-        
-        <select id="taskFilter" class="form-select form-select-sm fw-semibold" style="width: 160px;">
-            <option value="all">كل المهام</option>
-            <option value="قيد الانتظار">🔴 قيد الانتظار</option>
-            <option value="قيد التنفيذ">🟡 قيد التنفيذ</option>
-            <option value="تم الإصلاح">🟢 تم الإصلاح</option>
-        </select>
-    </div>
+        <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+            <h5 class="fw-bold text-dark m-0">
+                <i class="fa-solid fa-briefcase text-secondary me-1"></i> قائمة البلاغات الحالية
+            </h5>
 
-    <div id="tasksContainer">
-        <div class="text-center py-5 text-muted">
-            <i class="fa-solid fa-spinner fa-spin fa-2x mb-2"></i>
-            <p>جاري تحميل المهام الميدانية المزامنة حياً...</p>
+            <select id="taskFilter" class="form-select form-select-sm fw-semibold" style="width: 160px;">
+                <option value="all">كل المهام</option>
+                <option value="قيد الانتظار">🔴 قيد الانتظار</option>
+                <option value="قيد التنفيذ">🟡 قيد التنفيذ</option>
+                <option value="تم الإصلاح">🟢 تم الإصلاح</option>
+            </select>
         </div>
+
+        <div id="tasksContainer">
+            <div class="text-center py-5 text-muted">
+                <i class="fa-solid fa-spinner fa-spin fa-2x mb-2"></i>
+                <p>جاري تحميل المهام الميدانية المزامنة حياً...</p>
+            </div>
+        </div>
+
     </div>
 
-</div>
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getFirestore, collection, onSnapshot, doc, updateDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-<script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-    import { getFirestore, collection, onSnapshot, doc, updateDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        // إعدادات الـ Firebase Config الخاصة بمشروعك
+        const firebaseConfig = {
+            apiKey: "AIzaSyDTQs_H3KOVUkTD-RNnGIIE2nGvOjwf75s",
+            authDomain: "smart-street-dashboard-315dc.firebaseapp.com",
+            projectId: "smart-street-dashboard-315dc",
+            storageBucket: "smart-street-dashboard-315dc.firebasestorage.app",
+            messagingSenderId: "584982507857",
+            appId: "1:584982507857:web:cb0389114b14c23e21e370",
+            measurementId: "G-7TVNFGK93Q"
+        };
 
-    // إعدادات الـ Firebase Config الخاصة بمشروعك
-    const firebaseConfig = {
-        apiKey: "AIzaSyDTQs_H3KOVUkTD-RNnGIIE2nGvOjwf75s",
-        authDomain: "smart-street-dashboard-315dc.firebaseapp.com",
-        projectId: "smart-street-dashboard-315dc",
-        storageBucket: "smart-street-dashboard-315dc.firebasestorage.app",
-        messagingSenderId: "584982507857",
-        appId: "1:584982507857:web:cb0389114b14c23e21e370",
-        measurementId: "G-7TVNFGK93Q"
-    };
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
 
-    const app = initializeApp(firebaseConfig);
-    const db = getFirestore(app);
+        // 🔒 التحقق من هوية العامل وصلاحية الجلسة
+        const isLoggedIn = sessionStorage.getItem('workerLoggedIn');
+        const workerName = sessionStorage.getItem('workerName');
+        const workerPhone = sessionStorage.getItem('workerPhone');
 
-    // 🔒 التحقق من هوية العامل وصلاحية الجلسة
-    const isLoggedIn = sessionStorage.getItem('workerLoggedIn');
-    const workerName = sessionStorage.getItem('workerName');
-    const workerPhone = sessionStorage.getItem('workerPhone');
-
-    if (!isLoggedIn || !workerPhone) {
-        // إذا حاول الدخول مباشرة بدون لوجن، يتم تحويله لصفحة اللوجن الافتراضية للعمال
-        window.location.href = 'worker_login.html'; 
-    } else {
-        document.getElementById('workerDisplayName').innerText = `مرحباً، ${workerName}`;
-        document.getElementById('workerDisplayPhone').innerText = workerPhone;
-    }
-
-    // 🚪 حدث تسجيل الخروج للعامل
-    document.getElementById('workerLogoutBtn').addEventListener('click', () => {
-        if (confirm("هل تريد تسجيل الخروج من بوابة العمال؟")) {
-            sessionStorage.clear();
+        if (!isLoggedIn || !workerPhone) {
             window.location.href = 'worker_login.html';
+        } else {
+            document.getElementById('workerDisplayName').innerText = `مرحباً، ${workerName}`;
+            document.getElementById('workerDisplayPhone').innerText = workerPhone;
         }
-    });
 
-    let allTasks = [];
-    let currentFilter = "all";
-
-    // 🔄 المزامنة الحية لجلب المهام من كوليكشن `infrastructure_issues`
-    const issuesCollection = collection(db, "infrastructure_issues");
-
-    onSnapshot(issuesCollection, (snapshot) => {
-        allTasks = [];
-        snapshot.forEach((doc) => {
-            allTasks.push({ id: doc.id, ...doc.data() });
+        // 🚪 حدث تسجيل الخروج للعامل
+        document.getElementById('workerLogoutBtn').addEventListener('click', () => {
+            if (confirm("هل تريد تسجيل الخروج من بوابة العمال؟")) {
+                sessionStorage.clear();
+                window.location.href = 'worker_login.html';
+            }
         });
-        renderTasks();
-    });
 
-    // 🛠️ دالة تحديث حالة المهمة من قِبل العامل مباشرة
-    window.updateTaskStatus = async function(id, nextStatus) {
-        try {
-            const docRef = doc(db, "infrastructure_issues", id);
-            await updateDoc(docRef, { 
-                status: nextStatus,
-                updatedBy: workerName, // تسجيل من الذي قام بالتحديث ومتابعته
-                lastUpdated: new Date().toISOString()
+        let allTasks = [];
+        let currentFilter = "all";
+
+        // 🔄 المزامنة الحية المحدثة: جلب جميع بلاغات النظام (بدون تقييد بعامل معين)
+        const issuesCollection = collection(db, "infrastructure_issues");
+
+        onSnapshot(issuesCollection, (snapshot) => {
+            allTasks = [];
+            snapshot.forEach((doc) => {
+                const data = doc.data();
+                // سطر الفحص: سيطبع لكِ الحالة الدقيقة لكل بلاغ في الـ Console لمعاينتها
+                console.log("ID:", doc.id, "Status in DB:", `"${data.status}"`);
+                allTasks.push({ id: doc.id, ...doc.data() });
             });
-            alert(`تم تحديث حالة البلاغ بنجاح إلى: ${nextStatus}`);
-        } catch (error) {
-            console.error("Error updating status: ", error);
-            alert("فشل تحديث الحالة، تأكد من اتصالك بالإنترنت.");
-        }
-    };
+            renderTasks();
+        });
 
-    // 🎨 دالة رندرة وعرض كروت المهام بناءً على التصفية
-    function renderTasks() {
-        const container = document.getElementById("tasksContainer");
-        container.innerHTML = "";
+        // 🛠️ دالة تحديث حالة المهمة (عندما يضغط العامل على بدء التنفيذ، يتم تسجيل اسمه ورقم هاتفه كمسؤول عن البلاغ)
+        window.updateTaskStatus = async function (id, nextStatus) {
+            try {
+                const docRef = doc(db, "infrastructure_issues", id);
 
-        let filteredTasks = allTasks;
-        if (currentFilter !== "all") {
-            filteredTasks = allTasks.filter(task => task.status === currentFilter);
-        }
+                // تجهيز البيانات المطلوب تحديثها
+                const updateData = {
+                    status: nextStatus,
+                    updatedBy: workerName,
+                    lastUpdated: new Date().toISOString()
+                };
 
-        if (filteredTasks.length === 0) {
-            container.innerHTML = `<div class="alert alert-info text-center py-4 fw-semibold">لا توجد مهام ميدانية متاحة حالياً تحت هذا التصنيف.</div>`;
-            return;
-        }
+                // إذا قام العامل ببدء التنفيذ، نربطه بالبلاغ برقم هاتفه واسمه تلقائياً
+                if (nextStatus === "قيد التنفيذ") {
+                    updateData.assignedWorkerName = workerName;
+                    updateData.assignedWorkerPhone = workerPhone;
+                }
 
-        filteredTasks.forEach((task) => {
-            // تحديد كلاس اللون بناءً على الحالة والخطورة
-            let borderClass = "border-pending";
-            let statusText = "🔴 قيد الانتظار";
-            
-            if (task.status === "قيد التنفيذ") {
-                borderClass = "border-progress";
-                statusText = "🟡 قيد التنفيذ";
-            } else if (task.status === "تم الإصلاح") {
-                borderClass = "border-resolved";
-                statusText = "🟢 تم الإصلاح";
+                await updateDoc(docRef, updateData);
+                alert(`تم تحديث حالة البلاغ بنجاح إلى: ${nextStatus}`);
+            } catch (error) {
+                console.error("Error updating status: ", error);
+                alert("فشل تحديث الحالة، تأكد من اتصالك بالإنترنت.");
+            }
+        };
+
+        // 🎨 دالة رندرة وعرض كروت المهام بناءً على التصفية
+        function renderTasks() {
+            const container = document.getElementById("tasksContainer");
+            container.innerHTML = "";
+
+            // فلترة المهام مع معالجة النصوص وتوحيدها
+            let filteredTasks = allTasks.filter(task => {
+                if (!task.status) return false;
+
+                let normalizedStatus = task.status.trim();
+                if (normalizedStatus === "pending") normalizedStatus = "قيد الانتظار";
+                if (normalizedStatus === "in-progress") normalizedStatus = "قيد التنفيذ";
+                if (normalizedStatus === "resolved") normalizedStatus = "تم الإصلاح";
+
+                if (currentFilter === "all") return true;
+                return normalizedStatus === currentFilter;
+            });
+
+            if (filteredTasks.length === 0) {
+                container.innerHTML = `<div class="alert alert-info text-center py-4 fw-semibold">لا توجد مهام ميدانية متاحة حالياً تحت هذا التصنيف.</div>`;
+                return;
             }
 
-            let severityClass = "badge-severity-low";
-            if (task.severity === "حرجة وعاجلة جداً") severityClass = "badge-severity-high";
-            else if (task.severity === "متوسطة الأهمية") severityClass = "badge-severity-medium";
+            filteredTasks.forEach((task) => {
+                let borderClass = "border-pending";
+                let statusText = "🔴 قيد الانتظار";
+                let taskStatus = task.status.trim();
 
-            // بناء خيارات التحكم في الأزرار بناء على الحالة الحالية
-            let actionButtons = "";
-            if (task.status === "قيد الانتظار") {
-                actionButtons = `
+                if (taskStatus === "قيد التنفيذ" || taskStatus === "in-progress") {
+                    borderClass = "border-progress";
+                    statusText = "🟡 قيد التنفيذ";
+                } else if (taskStatus === "تم الإصلاح" || taskStatus === "resolved") {
+                    borderClass = "border-resolved";
+                    statusText = "🟢 تم الإصلاح";
+                }
+
+                let severityClass = "badge-severity-low";
+                if (task.severity === "حرجة وعاجلة جداً") severityClass = "badge-severity-high";
+                else if (task.severity === "متوسطة الأهمية") severityClass = "badge-severity-medium";
+
+                let actionButtons = "";
+                if (taskStatus === "قيد الانتظار" || taskStatus === "pending") {
+                    actionButtons = `
                     <button class="btn btn-warning text-dark btn-status-update w-100" onclick="updateTaskStatus('${task.id}', 'قيد التنفيذ')">
                         <i class="fa-solid fa-person-digging me-1"></i> بدء التنفيذ الآن
                     </button>`;
-            } else if (task.status === "قيد التنفيذ") {
-                actionButtons = `
-                    <button class="btn btn-success btn-status-update w-100" onclick="updateTaskStatus('${task.id}', 'تم الإصلاح')">
-                        <i class="fa-solid fa-check-double me-1"></i> تأكيد إتمام الإصلاح
-                    </button>`;
-            } else {
-                actionButtons = `<span class="text-success small fw-bold"><i class="fa-solid fa-circle-check"></i> تم إنهاء المهمة بنجاح</span>`;
-            }
+                } else if (taskStatus === "قيد التنفيذ" || taskStatus === "in-progress") {
+                    // لحماية المنطق: يفضل ألا يظهر زر إنهاء التعديل إلا للعامل الذي بدأ المهمة بنفسه
+                    if (!task.assignedWorkerPhone || task.assignedWorkerPhone === workerPhone) {
+                        actionButtons = `
+                        <button class="btn btn-success btn-status-update w-100" onclick="updateTaskStatus('${task.id}', 'تم الإصلاح')">
+                            <i class="fa-solid fa-check-double me-1"></i> تأكيد إتمام الإصلاح
+                        </button>`;
+                    } else {
+                        actionButtons = `<span class="text-muted small fw-bold"><i class="fa-solid fa-lock"></i> قيد التنفيذ بواسطة عامل آخر</span>`;
+                    }
+                } else {
+                    actionButtons = `<span class="text-success small fw-bold"><i class="fa-solid fa-circle-check"></i> تم إنهاء المهمة بنجاح</span>`;
+                }
 
-            const card = document.createElement("div");
-            card.className = `task-card ${borderClass}`;
-            card.innerHTML = `
+                const card = document.createElement("div");
+                card.className = `task-card ${borderClass}`;
+                card.innerHTML = `
                 <div class="row align-items-center g-3">
                     <div class="col-md-8">
                         <div class="d-flex align-items-center gap-2 mb-2">
@@ -243,16 +294,17 @@
                     </div>
                 </div>
             `;
-            container.appendChild(card);
-        });
-    }
+                container.appendChild(card);
+            });
+        }
 
-    // الاستماع لحدث تغيير الفلتر
-    document.getElementById("taskFilter").addEventListener("change", (e) => {
-        currentFilter = e.target.value;
-        renderTasks();
-    });
-</script>
+        // الاستماع لحدث تغيير الفلتر
+        document.getElementById("taskFilter").addEventListener("change", (e) => {
+            currentFilter = e.target.value;
+            renderTasks();
+        });
+    </script>
 
 </body>
+
 </html>

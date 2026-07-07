@@ -19,7 +19,6 @@
             box-shadow: 0 2px 4px rgba(0,0,0,0.02);
             padding: 15px 20px;
         }
-        /* تعديل الموازن ليتناسب مع وجود الأزرار الجديدة في اليسار */
         .nav-balancer {
             width: 150px;
         }
@@ -203,7 +202,7 @@
                 <tbody id="issuesTableBody">
                     <tr>
                         <td colspan="6" class="text-center text-muted py-4">
-                            <i class="fa-solid fa-spinner fa-spin fa-2x mb-2 d-block"></i> جاري مزامنة البيانات حياً...
+                            <i class="fa-solid fa-spinner fa-spin fa-2x mb-2 d-block"></i> جاري مزامنة البيانات حياً من قاعدة البيانات...
                         </td>
                     </tr>
                 </tbody>
@@ -223,7 +222,7 @@
     import { getFirestore, collection, onSnapshot, doc, updateDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
     import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
-    // إعدادات مشروع الـ Firebase Config الخاص بكِ
+    // إعدادات مشروع الـ Firebase Config
     const firebaseConfig = {
         apiKey: "AIzaSyDTQs_H3KOVUkTD-RNnGIIE2nGvOjwf75s",
         authDomain: "smart-street-dashboard-315dc.firebaseapp.com",
@@ -240,23 +239,22 @@
 
     let isInitialCheck = true;
 
+    // مراقبة جلسة تسجيل دخول الأدمن
     onAuthStateChanged(auth, (user) => {
         if (!user && !sessionStorage.getItem('adminLoggedIn')) {
             window.location.href = 'admin_login.html';
         } 
-        
         if (user) {
             sessionStorage.setItem('adminLoggedIn', 'true');
         }
-
         if (!user && !isInitialCheck) {
             sessionStorage.removeItem('adminLoggedIn');
             window.location.href = 'admin_login.html';
         }
-
         isInitialCheck = false;
     });
 
+    // تسجيل الخروج
     document.getElementById('logoutBtn').addEventListener('click', () => {
         if (confirm("هل أنت متأكد من رغبتك في تسجيل الخروج؟")) {
             signOut(auth).then(() => {
@@ -277,6 +275,7 @@
     let currentPage = 1;         
     const itemsPerPage = 5;      
 
+    // تحديث الرسوم البيانية بالداتا الحقيقية المستلمة
     function updateCharts(stats, regionStats) {
         const ctxStatus = document.getElementById('statusChart').getContext('2d');
         const ctxRegion = document.getElementById('regionChart').getContext('2d');
@@ -294,14 +293,17 @@
             options: { responsive: true, maintainAspectRatio: false }
         });
 
+        const regionLabels = Object.keys(regionStats);
+        const regionData = Object.values(regionStats);
+
         if (regionChartObj) regionChartObj.destroy();
         regionChartObj = new Chart(ctxRegion, {
             type: 'bar',
             data: {
-                labels: Object.keys(regionStats),
+                labels: regionLabels.length > 0 ? regionLabels : ['لا توجد مناطق'],
                 datasets: [{
                     label: 'عدد البلاغات المرفوعة',
-                    data: Object.values(regionStats),
+                    data: regionData.length > 0 ? regionData : [0],
                     backgroundColor: '#2b5998'
                 }]
             },
@@ -313,6 +315,7 @@
         });
     }
 
+    // تعديل الحالة الإدارية مباشرة في كوليكشن الفايربيز
     window.changeIssueStatus = async function(id, newStatus) {
         try {
             const docRef = doc(db, "infrastructure_issues", id);
@@ -323,6 +326,7 @@
         }
     };
 
+    // بناء وعرض جدول البيانات المفلتر والمقسم لصفحات
     function renderTable() {
         const tableBody = document.getElementById("issuesTableBody");
         tableBody.innerHTML = "";
@@ -335,27 +339,23 @@
         const totalItems = filteredIssues.length;
 
         if (totalItems === 0) {
-            tableBody.innerHTML = `<tr><td colspan="6" class="text-center text-muted py-4">لا توجد بلاغات تطابق خيار التصفية الحالي.</td></tr>`;
+            tableBody.innerHTML = `<tr><td colspan="6" class="text-center text-muted py-4">لا توجد بلاغات تطابق خيار التصفية الحالي أو قاعدة البيانات فارغة.</td></tr>`;
             document.getElementById("paginationInfo").innerText = "يعرض 0 إلى 0 من أصل 0 بلاغ";
             document.getElementById("paginationControls").innerHTML = "";
             return;
         }
 
         const totalPages = Math.ceil(totalItems / itemsPerPage);
-        
-        if (currentPage > totalPages) {
-            currentPage = totalPages || 1;
-        }
+        if (currentPage > totalPages) currentPage = totalPages || 1;
 
         const startIndex = (currentPage - 1) * itemsPerPage;
         const endIndex = Math.min(startIndex + itemsPerPage, totalItems);
-        
-        const paginatedIssues = filteredIssues.slice(startIndex, startIndex + itemsPerPage);
+        const paginatedIssues = filteredIssues.slice(startIndex, endIndex);
 
         paginatedIssues.forEach((data) => {
             let severityClass = "badge-severity-low";
-            if (data.severity === "حرجة وعاجلة جداً") severityClass = "badge-severity-high";
-            else if (data.severity === "متوسطة الأهمية") severityClass = "badge-severity-medium";
+            if (data.severity === "حرجة وعاجلة جداً" || data.severity === "حرجة" || data.severity === "High") severityClass = "badge-severity-high";
+            else if (data.severity === "متوسطة الأهمية" || data.severity === "متوسطة" || data.severity === "Medium") severityClass = "badge-severity-medium";
 
             const row = document.createElement("tr");
             row.innerHTML = `
@@ -363,9 +363,7 @@
                 <td><i class="fa-solid fa-map-pin text-secondary"></i> ${data.region || 'غير محدد'}</td>
                 <td class="small text-muted">${data.description || 'بدون وصف عيني'}</td>
                 <td><span class="badge ${severityClass} p-2">${data.severity || 'اعتيادية'}</span></td>
-                <td>
-                    <code class="text-dark">${data.coordinates || 'لم تلتقط'}</code>
-                </td>
+                <td><code class="text-dark">${data.coordinates || 'لم تلتقط'}</code></td>
                 <td>
                     <select class="form-select form-select-sm fw-semibold" onchange="changeIssueStatus('${data.id}', this.value)">
                         <option value="قيد الانتظار" class="text-danger" ${data.status === 'قيد الانتظار' ? 'selected' : ''}>🔴 قيد الانتظار</option>
@@ -430,6 +428,7 @@
         renderTable();
     });
 
+    // ⚡ السماع للبيانات الحية من الكوليكشن الحقيقي واحتساب الإحصائيات بدقة
     const issuesCollection = collection(db, "infrastructure_issues");
     
     onSnapshot(issuesCollection, (snapshot) => {
@@ -440,32 +439,45 @@
         let progress = 0;
         let resolved = 0;
 
-        const regionStats = { "الشيخ زايد": 0, "وسط البلد": 0, "الحي الأول": 0, "مدينة نصر": 0, "التجمع الخامس": 0, "الجونة": 0, "الساحل الشمالي": 0 };
+        const regionStats = {};
 
         snapshot.forEach((doc) => {
             total++;
             const data = doc.data();
             const id = doc.id;
 
-            const currentStatus = data.status || "قيد الانتظار";
-            if (currentStatus === "قيد الانتظار") pending++;
-            else if (currentStatus === "قيد التنفيذ") progress++;
-            else if (currentStatus === "تم الإصلاح") resolved++;
+            // تنظيف ومعالجة حالة البلاغ القادم من الـ Firestore ليتوافق مع الواجهة
+            let currentStatus = "قيد الانتظار"; 
+            if (data.status === "قيد الانتظار" || data.status === "pending" || data.status === "🔴 قيد الانتظار") {
+                currentStatus = "قيد الانتظار";
+                pending++;
+            } else if (data.status === "قيد التنفيذ" || data.status === "progress" || data.status === "in-progress" || data.status === "🟡 قيد التنفيذ") {
+                currentStatus = "قيد التنفيذ";
+                progress++;
+            } else if (data.status === "تم الإصلاح" || data.status === "resolved" || data.status === "completed" || data.status === "🟢 تم الإصلاح") {
+                currentStatus = "تم الإصلاح";
+                resolved++;
+            } else {
+                // افتراضي إذا كانت الخانة فارغة
+                pending++;
+            }
 
-            if (data.region && regionStats[data.region] !== undefined) {
-                regionStats[data.region]++;
-            } else if (data.region) {
-                regionStats[data.region] = 1; 
+            // احتساب إحصائيات المناطق ديناميكياً بدون الاعتماد على مسميات ثابتة مسبقاً
+            if (data.region) {
+                const regName = data.region.trim();
+                regionStats[regName] = (regionStats[regName] || 0) + 1;
             }
 
             allIssues.push({ id, ...data, status: currentStatus });
         });
 
+        // حقن الأرقام الحقيقية في الواجهة
         document.getElementById("count-total").innerText = total;
         document.getElementById("count-pending").innerText = pending;
         document.getElementById("count-progress").innerText = progress;
         document.getElementById("count-resolved").innerText = resolved;
 
+        // تحديث الرسم البياني والجدول بناءً على الداتا الحقيقية المستخرجة
         updateCharts({ pending, progress, resolved }, regionStats);
         renderTable();
     });
