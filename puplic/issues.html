@@ -19,9 +19,9 @@
             box-shadow: 0 2px 4px rgba(0,0,0,0.02);
             padding: 15px 20px;
         }
-        /* حل مشكلة التحذير في السطر 77 بنقل الستايل المدمج إلى هنا */
+        /* تعديل الموازن ليتناسب مع وجود الأزرار الجديدة في اليسار */
         .nav-balancer {
-            width: 100px;
+            width: 150px;
         }
         .stat-card {
             background: #ffffff;
@@ -73,6 +73,15 @@
         .status-pending { color: #dc3545; font-weight: bold; }
         .status-progress { color: #ffc107; font-weight: bold; }
         .status-resolved { color: #2dc937; font-weight: bold; }
+
+        .page-link {
+            color: #2b5998;
+            cursor: pointer;
+        }
+        .page-item.active .page-link {
+            background-color: #2b5998;
+            border-color: #2b5998;
+        }
     </style>
 </head>
 <body>
@@ -84,8 +93,14 @@
         <h5 class="fw-bold m-0 text-slate-800">نظام إدارة ومتابعة البلاغات الميدانية</h5>
         <small class="text-muted">المنصة المركزية للمناطق الرقمية الذكية</small>
     </div>
-    <div>
-        <button class="btn btn-outline-danger btn-sm fw-bold"><i class="fa-solid fa-arrow-right-from-bracket"></i> خروج آمن</button>
+    
+    <div class="d-flex gap-2">
+        <a href="manage_workers.html" class="btn btn-primary btn-sm fw-bold">
+            <i class="fa-solid fa-users-gear me-1"></i> إدارة العمال
+        </a>
+        <button id="logoutBtn" class="btn btn-outline-danger btn-sm fw-bold">
+            <i class="fa-solid fa-arrow-right-from-bracket"></i> خروج آمن
+        </button>
     </div>
 </nav>
 
@@ -158,10 +173,21 @@
     </div>
 
     <div class="table-container">
-        <div class="d-flex justify-content-between align-items-center mb-3">
+        <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
             <h5 class="fw-bold m-0 text-dark"><i class="fa-solid fa-folder-open text-warning"></i> سجل البلاغات الواردة الحية</h5>
-            <span class="badge bg-primary">تحديث تلقائي مفعّل</span>
+            
+            <div class="d-flex gap-2 align-items-center">
+                <label for="statusFilter" class="form-label m-0 small fw-bold text-muted">تصفية حسب الحالة:</label>
+                <select id="statusFilter" class="form-select form-select-sm fw-semibold" style="width: 160px;">
+                    <option value="all">كل البلاغات</option>
+                    <option value="قيد الانتظار">🔴 قيد الانتظار</option>
+                    <option value="قيد التنفيذ">🟡 قيد التنفيذ</option>
+                    <option value="تم الإصلاح">🟢 تم الإصلاح</option>
+                </select>
+                <span class="badge bg-primary">تحديث تلقائي مفعّل</span>
+            </div>
         </div>
+
         <div class="table-responsive">
             <table class="table table-hover align-middle">
                 <thead class="table-light">
@@ -183,6 +209,11 @@
                 </tbody>
             </table>
         </div>
+
+        <nav class="d-flex justify-content-between align-items-center mt-3 flex-wrap gap-2">
+            <small class="text-muted fw-semibold" id="paginationInfo">يعرض 0 إلى 0 من أصل 0 بلاغ</small>
+            <ul class="pagination pagination-sm m-0" id="paginationControls"></ul>
+        </nav>
     </div>
 
 </div>
@@ -190,22 +221,61 @@
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
     import { getFirestore, collection, onSnapshot, doc, updateDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+    import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
-    // إعدادات مشروع الـ Firebase Config
+    // إعدادات مشروع الـ Firebase Config الخاص بكِ
     const firebaseConfig = {
-        apiKey: "YOUR_API_KEY",
+        apiKey: "AIzaSyDTQs_H3KOVUkTD-RNnGIIE2nGvOjwf75s",
         authDomain: "smart-street-dashboard-315dc.firebaseapp.com",
         projectId: "smart-street-dashboard-315dc",
-        storageBucket: "smart-street-dashboard-315dc.appspot.com",
-        messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
-        appId: "YOUR_APP_ID"
+        storageBucket: "smart-street-dashboard-315dc.firebasestorage.app",
+        messagingSenderId: "584982507857",
+        appId: "1:584982507857:web:cb0389114b14c23e21e370",
+        measurementId: "G-7TVNFGK93Q"
     };
 
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
+    const auth = getAuth(app);
+
+    let isInitialCheck = true;
+
+    onAuthStateChanged(auth, (user) => {
+        if (!user && !sessionStorage.getItem('adminLoggedIn')) {
+            window.location.href = 'admin_login.html';
+        } 
+        
+        if (user) {
+            sessionStorage.setItem('adminLoggedIn', 'true');
+        }
+
+        if (!user && !isInitialCheck) {
+            sessionStorage.removeItem('adminLoggedIn');
+            window.location.href = 'admin_login.html';
+        }
+
+        isInitialCheck = false;
+    });
+
+    document.getElementById('logoutBtn').addEventListener('click', () => {
+        if (confirm("هل أنت متأكد من رغبتك في تسجيل الخروج؟")) {
+            signOut(auth).then(() => {
+                sessionStorage.removeItem('adminLoggedIn');
+                window.location.href = 'admin_login.html';
+            }).catch((error) => {
+                console.error("Error during signout: ", error);
+                alert("حدث خطأ أثناء محاولة تسجيل الخروج.");
+            });
+        }
+    });
 
     let statusChartObj = null;
     let regionChartObj = null;
+
+    let allIssues = [];          
+    let currentFilter = "all";   
+    let currentPage = 1;         
+    const itemsPerPage = 5;      
 
     function updateCharts(stats, regionStats) {
         const ctxStatus = document.getElementById('statusChart').getContext('2d');
@@ -243,7 +313,6 @@
         });
     }
 
-    // دالة تغيير حالة المستند داخل جدول المتابعة
     window.changeIssueStatus = async function(id, newStatus) {
         try {
             const docRef = doc(db, "infrastructure_issues", id);
@@ -254,12 +323,117 @@
         }
     };
 
+    function renderTable() {
+        const tableBody = document.getElementById("issuesTableBody");
+        tableBody.innerHTML = "";
+
+        let filteredIssues = allIssues;
+        if (currentFilter !== "all") {
+            filteredIssues = allIssues.filter(issue => issue.status === currentFilter);
+        }
+
+        const totalItems = filteredIssues.length;
+
+        if (totalItems === 0) {
+            tableBody.innerHTML = `<tr><td colspan="6" class="text-center text-muted py-4">لا توجد بلاغات تطابق خيار التصفية الحالي.</td></tr>`;
+            document.getElementById("paginationInfo").innerText = "يعرض 0 إلى 0 من أصل 0 بلاغ";
+            document.getElementById("paginationControls").innerHTML = "";
+            return;
+        }
+
+        const totalPages = Math.ceil(totalItems / itemsPerPage);
+        
+        if (currentPage > totalPages) {
+            currentPage = totalPages || 1;
+        }
+
+        const startIndex = (currentPage - 1) * itemsPerPage;
+        const endIndex = Math.min(startIndex + itemsPerPage, totalItems);
+        
+        const paginatedIssues = filteredIssues.slice(startIndex, startIndex + itemsPerPage);
+
+        paginatedIssues.forEach((data) => {
+            let severityClass = "badge-severity-low";
+            if (data.severity === "حرجة وعاجلة جداً") severityClass = "badge-severity-high";
+            else if (data.severity === "متوسطة الأهمية") severityClass = "badge-severity-medium";
+
+            const row = document.createElement("tr");
+            row.innerHTML = `
+                <td class="fw-bold">${data.issueType || 'غير محدد'}</td>
+                <td><i class="fa-solid fa-map-pin text-secondary"></i> ${data.region || 'غير محدد'}</td>
+                <td class="small text-muted">${data.description || 'بدون وصف عيني'}</td>
+                <td><span class="badge ${severityClass} p-2">${data.severity || 'اعتيادية'}</span></td>
+                <td>
+                    <code class="text-dark">${data.coordinates || 'لم تلتقط'}</code>
+                </td>
+                <td>
+                    <select class="form-select form-select-sm fw-semibold" onchange="changeIssueStatus('${data.id}', this.value)">
+                        <option value="قيد الانتظار" class="text-danger" ${data.status === 'قيد الانتظار' ? 'selected' : ''}>🔴 قيد الانتظار</option>
+                        <option value="قيد التنفيذ" class="text-warning" ${data.status === 'قيد التنفيذ' ? 'selected' : ''}>🟡 قيد التنفيذ</option>
+                        <option value="تم الإصلاح" class="text-success" ${data.status === 'تم الإصلاح' ? 'selected' : ''}>🟢 تم الإصلاح</option>
+                    </select>
+                </td>
+            `;
+            tableBody.appendChild(row);
+        });
+
+        document.getElementById("paginationInfo").innerText = `يعرض ${startIndex + 1} إلى ${endIndex} من أصل ${totalItems} بلاغ`;
+        buildPaginationControls(totalPages);
+    }
+
+    function buildPaginationControls(totalPages) {
+        const controlsContainer = document.getElementById("paginationControls");
+        controlsContainer.innerHTML = "";
+
+        if (totalPages <= 1) return;
+
+        const prevLi = document.createElement("li");
+        prevLi.className = `page-item ${currentPage === 1 ? 'disabled' : ''}`;
+        prevLi.innerHTML = `<a class="page-link">السابق</a>`;
+        prevLi.addEventListener("click", (e) => {
+            e.preventDefault();
+            if (currentPage > 1) {
+                currentPage--;
+                renderTable();
+            }
+        });
+        controlsContainer.appendChild(prevLi);
+
+        for (let i = 1; i <= totalPages; i++) {
+            const li = document.createElement("li");
+            li.className = `page-item ${currentPage === i ? 'active' : ''}`;
+            li.innerHTML = `<a class="page-link">${i}</a>`;
+            li.addEventListener("click", (e) => {
+                e.preventDefault();
+                currentPage = i;
+                renderTable();
+            });
+            controlsContainer.appendChild(li);
+        }
+
+        const nextLi = document.createElement("li");
+        nextLi.className = `page-item ${currentPage === totalPages ? 'disabled' : ''}`;
+        nextLi.innerHTML = `<a class="page-link">التالي</a>`;
+        nextLi.addEventListener("click", (e) => {
+            e.preventDefault();
+            if (currentPage < totalPages) {
+                currentPage++;
+                renderTable();
+            }
+        });
+        controlsContainer.appendChild(nextLi);
+    }
+
+    document.getElementById("statusFilter").addEventListener("change", (e) => {
+        currentFilter = e.target.value;
+        currentPage = 1; 
+        renderTable();
+    });
+
     const issuesCollection = collection(db, "infrastructure_issues");
     
-    // المزامنة الحية وعرض السجلات والكروت والرسومات البيانية
     onSnapshot(issuesCollection, (snapshot) => {
-        const tableBody = document.getElementById("issuesTableBody");
-        tableBody.innerHTML = ""; 
+        allIssues = []; 
 
         let total = 0;
         let pending = 0;
@@ -267,10 +441,6 @@
         let resolved = 0;
 
         const regionStats = { "الشيخ زايد": 0, "وسط البلد": 0, "الحي الأول": 0, "مدينة نصر": 0, "التجمع الخامس": 0, "الجونة": 0, "الساحل الشمالي": 0 };
-
-        if (snapshot.empty) {
-            tableBody.innerHTML = `<tr><td colspan="6" class="text-center text-muted py-3">لا توجد بلاغات مسجلة حالياً في النظام.</td></tr>`;
-        }
 
         snapshot.forEach((doc) => {
             total++;
@@ -288,28 +458,7 @@
                 regionStats[data.region] = 1; 
             }
 
-            let severityClass = "badge-severity-low";
-            if (data.severity === "حرجة وعاجلة جداً") severityClass = "badge-severity-high";
-            else if (data.severity === "متوسطة الأهمية") severityClass = "badge-severity-medium";
-
-            const row = document.createElement("tr");
-            row.innerHTML = `
-                <td class="fw-bold">${data.issueType || 'غير محدد'}</td>
-                <td><i class="fa-solid fa-map-pin text-secondary"></i> ${data.region || 'غير محدد'}</td>
-                <td class="small text-muted">${data.description || 'بدون وصف عيني'}</td>
-                <td><span class="badge ${severityClass} p-2">${data.severity || 'اعتيادية'}</span></td>
-                <td>
-                    <code class="text-dark">${data.coordinates || 'لم تلتقط'}</code>
-                </td>
-                <td>
-                    <select class="form-select form-select-sm fw-semibold" onchange="changeIssueStatus('${id}', this.value)">
-                        <option value="قيد الانتظار" class="text-danger" ${currentStatus === 'قيد الانتظار' ? 'selected' : ''}>🔴 قيد الانتظار</option>
-                        <option value="قيد التنفيذ" class="text-warning" ${currentStatus === 'قيد التنفيذ' ? 'selected' : ''}>🟡 قيد التنفيذ</option>
-                        <option value="تم الإصلاح" class="text-success" ${currentStatus === 'تم الإصلاح' ? 'selected' : ''}>🟢 تم الإصلاح</option>
-                    </select>
-                </td>
-            `;
-            tableBody.appendChild(row);
+            allIssues.push({ id, ...data, status: currentStatus });
         });
 
         document.getElementById("count-total").innerText = total;
@@ -318,6 +467,7 @@
         document.getElementById("count-resolved").innerText = resolved;
 
         updateCharts({ pending, progress, resolved }, regionStats);
+        renderTable();
     });
 </script>
 

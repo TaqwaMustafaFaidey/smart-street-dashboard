@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>بوابة العامل - المهام الميدانية</title>
+    
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        body {
+            background-color: #f1f5f9;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        .navbar-worker {
+            background-color: #1e293b;
+            color: #ffffff;
+            padding: 15px 20px;
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+        }
+        .task-card {
+            background: #ffffff;
+            border: none;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.02);
+            border-right: 6px solid #cbd5e1;
+            transition: transform 0.2s;
+        }
+        .task-card:hover {
+            transform: translateY(-2px);
+        }
+        /* تلوين أطراف الكروت حسب حالة البلاغ */
+        .border-pending { border-right-color: #ef4444; }
+        .border-progress { border-right-color: #f59e0b; }
+        .border-resolved { border-right-color: #10b981; }
+
+        .badge-severity-high { background-color: #fee2e2; color: #991b1b; }
+        .badge-severity-medium { background-color: #fef3c7; color: #92400e; }
+        .badge-severity-low { background-color: #f0fdf4; color: #166534; }
+
+        .btn-status-update {
+            font-weight: 600;
+            font-size: 14px;
+            border-radius: 8px;
+        }
+        .gps-box {
+            background-color: #f8fafc;
+            border: 1px dashed #cbd5e1;
+            border-radius: 6px;
+            padding: 6px 12px;
+            font-family: monospace;
+        }
+    </style>
+</head>
+<body>
+
+<nav class="navbar navbar-worker d-flex justify-content-between align-items-center">
+    <div class="d-flex align-items-center gap-2">
+        <div class="bg-info text-dark rounded-circle d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+            <i class="fa-solid fa-user-gear"></i>
+        </div>
+        <div>
+            <h6 class="m-0 fw-bold" id="workerDisplayName">جاري التحميل...</h6>
+            <small class="text-info" id="workerDisplayPhone">01xxxxxxxxx</small>
+        </div>
+    </div>
+    
+    <div class="text-center d-none d-md-block">
+        <h5 class="fw-bold m-0">بوابة المهام الميدانية</h5>
+    </div>
+
+    <div>
+        <button id="workerLogoutBtn" class="btn btn-outline-light btn-sm fw-bold">
+            <i class="fa-solid fa-arrow-right-from-bracket"></i> خروج
+        </button>
+    </div>
+</nav>
+
+<div class="container my-4">
+    
+    <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+        <h5 class="fw-bold text-dark m-0">
+            <i class="fa-solid fa-briefcase text-secondary me-1"></i> قائمة البلاغات الحالية
+        </h5>
+        
+        <select id="taskFilter" class="form-select form-select-sm fw-semibold" style="width: 160px;">
+            <option value="all">كل المهام</option>
+            <option value="قيد الانتظار">🔴 قيد الانتظار</option>
+            <option value="قيد التنفيذ">🟡 قيد التنفيذ</option>
+            <option value="تم الإصلاح">🟢 تم الإصلاح</option>
+        </select>
+    </div>
+
+    <div id="tasksContainer">
+        <div class="text-center py-5 text-muted">
+            <i class="fa-solid fa-spinner fa-spin fa-2x mb-2"></i>
+            <p>جاري تحميل المهام الميدانية المزامنة حياً...</p>
+        </div>
+    </div>
+
+</div>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import { getFirestore, collection, onSnapshot, doc, updateDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+    // إعدادات الـ Firebase Config الخاصة بمشروعك
+    const firebaseConfig = {
+        apiKey: "AIzaSyDTQs_H3KOVUkTD-RNnGIIE2nGvOjwf75s",
+        authDomain: "smart-street-dashboard-315dc.firebaseapp.com",
+        projectId: "smart-street-dashboard-315dc",
+        storageBucket: "smart-street-dashboard-315dc.firebasestorage.app",
+        messagingSenderId: "584982507857",
+        appId: "1:584982507857:web:cb0389114b14c23e21e370",
+        measurementId: "G-7TVNFGK93Q"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    // 🔒 التحقق من هوية العامل وصلاحية الجلسة
+    const isLoggedIn = sessionStorage.getItem('workerLoggedIn');
+    const workerName = sessionStorage.getItem('workerName');
+    const workerPhone = sessionStorage.getItem('workerPhone');
+
+    if (!isLoggedIn || !workerPhone) {
+        // إذا حاول الدخول مباشرة بدون لوجن، يتم تحويله لصفحة اللوجن الافتراضية للعمال
+        window.location.href = 'worker_login.html'; 
+    } else {
+        document.getElementById('workerDisplayName').innerText = `مرحباً، ${workerName}`;
+        document.getElementById('workerDisplayPhone').innerText = workerPhone;
+    }
+
+    // 🚪 حدث تسجيل الخروج للعامل
+    document.getElementById('workerLogoutBtn').addEventListener('click', () => {
+        if (confirm("هل تريد تسجيل الخروج من بوابة العمال؟")) {
+            sessionStorage.clear();
+            window.location.href = 'worker_login.html';
+        }
+    });
+
+    let allTasks = [];
+    let currentFilter = "all";
+
+    // 🔄 المزامنة الحية لجلب المهام من كوليكشن `infrastructure_issues`
+    const issuesCollection = collection(db, "infrastructure_issues");
+
+    onSnapshot(issuesCollection, (snapshot) => {
+        allTasks = [];
+        snapshot.forEach((doc) => {
+            allTasks.push({ id: doc.id, ...doc.data() });
+        });
+        renderTasks();
+    });
+
+    // 🛠️ دالة تحديث حالة المهمة من قِبل العامل مباشرة
+    window.updateTaskStatus = async function(id, nextStatus) {
+        try {
+            const docRef = doc(db, "infrastructure_issues", id);
+            await updateDoc(docRef, { 
+                status: nextStatus,
+                updatedBy: workerName, // تسجيل من الذي قام بالتحديث ومتابعته
+                lastUpdated: new Date().toISOString()
+            });
+            alert(`تم تحديث حالة البلاغ بنجاح إلى: ${nextStatus}`);
+        } catch (error) {
+            console.error("Error updating status: ", error);
+            alert("فشل تحديث الحالة، تأكد من اتصالك بالإنترنت.");
+        }
+    };
+
+    // 🎨 دالة رندرة وعرض كروت المهام بناءً على التصفية
+    function renderTasks() {
+        const container = document.getElementById("tasksContainer");
+        container.innerHTML = "";
+
+        let filteredTasks = allTasks;
+        if (currentFilter !== "all") {
+            filteredTasks = allTasks.filter(task => task.status === currentFilter);
+        }
+
+        if (filteredTasks.length === 0) {
+            container.innerHTML = `<div class="alert alert-info text-center py-4 fw-semibold">لا توجد مهام ميدانية متاحة حالياً تحت هذا التصنيف.</div>`;
+            return;
+        }
+
+        filteredTasks.forEach((task) => {
+            // تحديد كلاس اللون بناءً على الحالة والخطورة
+            let borderClass = "border-pending";
+            let statusText = "🔴 قيد الانتظار";
+            
+            if (task.status === "قيد التنفيذ") {
+                borderClass = "border-progress";
+                statusText = "🟡 قيد التنفيذ";
+            } else if (task.status === "تم الإصلاح") {
+                borderClass = "border-resolved";
+                statusText = "🟢 تم الإصلاح";
+            }
+
+            let severityClass = "badge-severity-low";
+            if (task.severity === "حرجة وعاجلة جداً") severityClass = "badge-severity-high";
+            else if (task.severity === "متوسطة الأهمية") severityClass = "badge-severity-medium";
+
+            // بناء خيارات التحكم في الأزرار بناء على الحالة الحالية
+            let actionButtons = "";
+            if (task.status === "قيد الانتظار") {
+                actionButtons = `
+                    <button class="btn btn-warning text-dark btn-status-update w-100" onclick="updateTaskStatus('${task.id}', 'قيد التنفيذ')">
+                        <i class="fa-solid fa-person-digging me-1"></i> بدء التنفيذ الآن
+                    </button>`;
+            } else if (task.status === "قيد التنفيذ") {
+                actionButtons = `
+                    <button class="btn btn-success btn-status-update w-100" onclick="updateTaskStatus('${task.id}', 'تم الإصلاح')">
+                        <i class="fa-solid fa-check-double me-1"></i> تأكيد إتمام الإصلاح
+                    </button>`;
+            } else {
+                actionButtons = `<span class="text-success small fw-bold"><i class="fa-solid fa-circle-check"></i> تم إنهاء المهمة بنجاح</span>`;
+            }
+
+            const card = document.createElement("div");
+            card.className = `task-card ${borderClass}`;
+            card.innerHTML = `
+                <div class="row align-items-center g-3">
+                    <div class="col-md-8">
+                        <div class="d-flex align-items-center gap-2 mb-2">
+                            <h5 class="fw-bold text-dark m-0">${task.issueType || 'بلاغ غير محدد'}</h5>
+                            <span class="badge ${severityClass}">${task.severity || 'اعتيادي'}</span>
+                        </div>
+                        <p class="text-secondary mb-2 small fw-semibold"><i class="fa-solid fa-map-location-dot me-1"></i> المنطقة: ${task.region || 'غير محددة'}</p>
+                        <p class="text-muted mb-3 small">${task.description || 'لا يوجد وصف فني متوفر لهذا البلاغ.'}</p>
+                        
+                        <div class="d-flex align-items-center gap-3 flex-wrap">
+                            <span class="gps-box small text-dark"><i class="fa-solid fa-location-crosshairs text-danger me-1"></i> ${task.coordinates || 'لم تلتقط'}</span>
+                            <span class="small fw-bold text-dark">الحالة الحالية: ${statusText}</span>
+                        </div>
+                    </div>
+                    <div class="col-md-4 text-md-end text-center">
+                        <hr class="d-md-none">
+                        ${actionButtons}
+                    </div>
+                </div>
+            `;
+            container.appendChild(card);
+        });
+    }
+
+    // الاستماع لحدث تغيير الفلتر
+    document.getElementById("taskFilter").addEventListener("change", (e) => {
+        currentFilter = e.target.value;
+        renderTasks();
+    });
+</script>
+
+</body>
+</html>

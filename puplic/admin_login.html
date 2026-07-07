@@ -6,6 +6,7 @@
     <title>تسجيل دخول الإدارة المركزية</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
     <style>
         body {
             background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
@@ -14,12 +15,13 @@
             display: flex;
             align-items: center;
             justify-content: center;
+            padding: 20px;
         }
         .login-card {
             background: #ffffff;
             border: none;
             border-radius: 16px;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.25);
             padding: 40px;
             width: 100%;
             max-width: 420px;
@@ -40,69 +42,126 @@
             font-weight: 600;
             padding: 12px;
             border-radius: 8px;
-            transition: all 0.3s;
+            transition: all 0.3s ease;
             border: none;
         }
         .btn-login:hover {
             background-color: #0f172a;
             color: white;
         }
+        .input-group-text {
+            border-left: none !important;
+            border-radius: 0 8px 8px 0 !important;
+        }
+        .form-control {
+            border-right: none !important;
+            border-radius: 8px 0 0 8px !important;
+        }
+        .form-control:focus {
+            box-shadow: none;
+            border-color: #ced4da;
+            background-color: #fff !important;
+        }
         .alert-error {
             display: none;
             font-size: 14px;
             border-radius: 8px;
-            padding: 10px;
+            padding: 12px;
         }
     </style>
 </head>
 <body>
 
 <div class="login-card">
-    <div class="brand-logo"><i class="fa-solid fa-shield-halved text-danger me-2"></i>Smart<span>Dashboard</span></div>
+    <div class="brand-logo">
+        <i class="fa-solid fa-shield-halved text-danger me-2"></i>Smart<span>Dashboard</span>
+    </div>
     <p class="text-muted text-center small mb-4">بوابة تسجيل دخول المراقبين والأدمن فقط</p>
     
-    <div class="alert alert-danger alert-error text-center mb-3" id="error-message">
-        <i class="fa-solid fa-circle-exclamation"></i> خطأ في البريد الإلكتروني أو كلمة المرور!
-    </div>
+    <div class="alert alert-danger alert-error text-center mb-3" id="errorMessage" role="alert"></div>
 
     <form id="adminLoginForm">
         <div class="mb-3">
-            <label class="form-label fw-semibold small text-secondary">بريد الأدمن الإلكتروني</label>
+            <label for="adminEmail" class="form-label fw-semibold small text-secondary">بريد الأدمن الإلكتروني</label>
             <div class="input-group">
-                <span class="input-group-text bg-light border-end-0 text-muted"><i class="fa-solid fa-user-gear"></i></span>
-                <input type="email" id="adminEmail" class="form-control border-start-0 bg-light" placeholder="admin@street.com" required>
+                <span class="input-group-text bg-light text-muted"><i class="fa-solid fa-user-gear"></i></span>
+                <input type="email" id="adminEmail" class="form-control bg-light" placeholder="admin@street.com" required autocomplete="email">
             </div>
         </div>
         
         <div class="mb-4">
-            <label class="form-label fw-semibold small text-secondary">كلمة المرور</label>
+            <label for="adminPassword" class="form-label fw-semibold small text-secondary">كلمة المرور</label>
             <div class="input-group">
-                <span class="input-group-text bg-light border-end-0 text-muted"><i class="fa-solid fa-key"></i></span>
-                <input type="password" id="adminPassword" class="form-control border-start-0 bg-light" placeholder="••••••••" required>
+                <span class="input-group-text bg-light text-muted"><i class="fa-solid fa-key"></i></span>
+                <input type="password" id="adminPassword" class="form-control bg-light" placeholder="••••••••" required autocomplete="current-password">
             </div>
         </div>
 
-        <button type="submit" class="btn btn-login w-100">دخول للنظام المركزي <i class="fa-solid fa-arrow-left-to-bracket ms-1"></i></button>
+        <button type="submit" id="submitBtn" class="btn btn-login w-100">
+            <span>دخول للنظام المركزي</span> 
+            <i class="fa-solid fa-arrow-right-to-bracket ms-1"></i>
+        </button>
     </form>
 </div>
 
-<script>
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import { getAuth, signInWithEmailAndPassword, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+
+    // إعدادات مشروع الـ Firebase Config الخاصة بكِ
+    const firebaseConfig = {
+        apiKey: "AIzaSyDTQs_H3KOVUkTD-RNnGIIE2nGvOjwf75s",
+        authDomain: "smart-street-dashboard-315dc.firebaseapp.com",
+        projectId: "smart-street-dashboard-315dc",
+        storageBucket: "smart-street-dashboard-315dc.firebasestorage.app",
+        messagingSenderId: "584982507857",
+        appId: "1:584982507857:web:cb0389114b14c23e21e370",
+        measurementId: "G-7TVNFGK93Q"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+
+    // ✨ [توجيه ذكي]: إذا كان الأدمن مسجل الدخول بالفعل، يتم توجيهه مباشرة دون الحاجة للـ Login من جديد
+    onAuthStateChanged(auth, (user) => {
+        if (user && sessionStorage.getItem('adminLoggedIn') === 'true') {
+            window.location.href = 'issues.html';
+        }
+    });
+
+    // التعامل مع تقديم الفورم
     document.getElementById('adminLoginForm').addEventListener('submit', function(e) {
         e.preventDefault();
         
         const email = document.getElementById('adminEmail').value.trim();
         const password = document.getElementById('adminPassword').value;
-        const errorAlert = document.getElementById('error-message');
+        const errorAlert = document.getElementById('errorMessage');
+        const submitBtn = document.getElementById('submitBtn');
         
         errorAlert.style.display = 'none';
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = `<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span> جاري التحقق من الحساب...`;
 
-        // الحساب الخاص بيكِ كـ أدمن للوحة التحكم
-        if (email === 'admin@street.com' && password === 'admin123') {
-            sessionStorage.setItem('adminLoggedIn', 'true');
-            window.location.href = 'issues.html'; 
-        } else {
-            errorAlert.style.display = 'block'; 
-        }
+        // تسجيل الدخول الفعلي عبر Firebase Auth
+        signInWithEmailAndPassword(auth, email, password)
+            .then((userCredential) => {
+                // 🔒 تأكيد وحفظ الجلسة في الـ sessionStorage قبل النقل الفوري
+                sessionStorage.setItem('adminLoggedIn', 'true');
+                window.location.href = 'issues.html';
+            })
+            .catch((error) => {
+                errorAlert.style.display = 'block';
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = `<span>دخول للنظام المركزي</span> <i class="fa-solid fa-arrow-right-to-bracket ms-1"></i>`;
+                
+                if (error.code === 'auth/invalid-credential' || error.code === 'auth/wrong-password' || error.code === 'auth/user-not-found') {
+                    errorAlert.innerHTML = `<i class="fa-solid fa-circle-exclamation me-1"></i> خطأ في البريد الإلكتروني أو كلمة المرور!`;
+                } else if (error.code === 'auth/too-many-requests') {
+                    errorAlert.innerHTML = `<i class="fa-solid fa-circle-exclamation me-1"></i> تم محاولة الدخول الخاطئ كثيراً، الحساب معطل مؤقتاً!`;
+                } else {
+                    errorAlert.innerHTML = `<i class="fa-solid fa-circle-exclamation me-1"></i> عذراً، حدث خطأ ما في السيرفر. حاول مجدداً`;
+                }
+            });
     });
 </script>
 

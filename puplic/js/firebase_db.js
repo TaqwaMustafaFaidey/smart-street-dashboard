@@ -1,31 +1,31 @@
 // js/firebase_db.js
 
-// 1️⃣ حطي كود الربط (Firebase Config) اللي هتديهوني هنا تحت السطر ده:
-// ==========================================
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
 import { getFirestore, collection, addDoc, onSnapshot, doc, updateDoc, query, orderBy } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-// هنا هتحطي الـ firebaseConfig بتاعكِ
+// ========================================================
+// ⚠️ قومي باستبدال القيم أدناه ببيانات مشروعك الحقيقية من Firebase Settings
+// ========================================================
 const firebaseConfig = {
-    apiKey: "YOUR_API_KEY",
-    authDomain: "YOUR_AUTH_DOMAIN",
-    projectId: "YOUR_PROJECT_ID",
-    storageBucket: "YOUR_STORAGE_BUCKET",
-    messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
-    appId: "YOUR_APP_ID"
+  apiKey: "AIzaSyDTQs_H3KOVUkTD-RNnGIIE2nGvOjwf75s",
+  authDomain: "smart-street-dashboard-315dc.firebaseapp.com",
+  projectId: "smart-street-dashboard-315dc",
+  storageBucket: "smart-street-dashboard-315dc.firebasestorage.app",
+  messagingSenderId: "584982507857",
+  appId: "1:584982507857:web:cb0389114b14c23e21e370",
+  measurementId: "G-7TVNFGK93Q"
 };
-// ==========================================
 
-// تشغيل الفايربيز وقاعدة البيانات
+// تهيئة وتشغيل الفايربيز وقاعدة البيانات
 const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
+export const db = getFirestore(app); // تم عمل export للـ db عشان لو احتجتيه في سكريبتات فرعية
 
 /**
  * دالة إنشاء بلاغ جديد (تتكفل بإنشاء الكوليكشن والحقول تلقائياً في أول مرة)
  */
 export async function createNewReport(reportData) {
     try {
-        // إضافة طابع زمني دقيق للبلاغ قبل الرفع
+        // إضافة طابع زمني دقيق للبلاغ قبل الرفع لقاعدة البيانات
         const now = new Date();
         const formattedDate = now.toLocaleString('ar-EG', { 
             hour: '2-digit', 
@@ -37,11 +37,11 @@ export async function createNewReport(reportData) {
 
         const finalPayload = {
             ...reportData,
-            creationDate: formattedDate, // الوقت والتاريخ
-            timestamp: Date.now()        // للترتيب التلقائي
+            creationDate: formattedDate, // الوقت والتاريخ بتنسيق عربي مقروء
+            timestamp: Date.now()        // الـ Timestamp الفعلي للترتيب التصاعدي/التنازلي
         };
 
-        // الرفع المباشر (الفايربيز سيكريت كوليكشن reports آلياً لو مش موجود)
+        // الرفع المباشر لـ Firestore (يتم إنشاء كوليكشن reports آلياً لو مش موجود)
         const docRef = await addDoc(collection(db, "reports"), finalPayload);
         return docRef.id;
     } catch (error) {
@@ -68,7 +68,7 @@ export function listenToReports(callback) {
 }
 
 /**
- * دالة تحديث حالة البلاغ من لوحة الأدمن (Open -> In Progress -> Fixed)
+ * دالة تحديث حالة البلاغ من لوحة الأدمن (pending -> progress -> resolved)
  */
 export async function updateReportStatus(reportId, newStatus) {
     try {

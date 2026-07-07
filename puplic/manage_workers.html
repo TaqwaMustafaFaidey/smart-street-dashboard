@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>بوابة الإدارة - إدارة حسابات العمال</title>
+    
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        body {
+            background-color: #f8fafc;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        .navbar-custom {
+            background-color: #ffffff;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+            padding: 15px 20px;
+        }
+        .main-container {
+            margin-top: 30px;
+            margin-bottom: 50px;
+        }
+        .card-custom {
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.01);
+        }
+        .table-container {
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 20px;
+        }
+    </style>
+</head>
+<body>
+
+<!-- شريط الملاحة العلوي -->
+<nav class="navbar navbar-custom d-flex justify-content-between align-items-center">
+    <div>
+        <a href="issues.html" class="btn btn-outline-secondary btn-sm fw-bold">
+            <i class="fa-solid fa-arrow-right"></i> العودة للوحة البلاغات
+        </a>
+    </div> 
+    
+    <div class="text-center">
+        <h5 class="fw-bold m-0 text-slate-800">منظومة إدارة شؤون العمال والفنيين</h5>
+        <small class="text-muted">التحكم في صلاحيات الوصول الميداني</small>
+    </div>
+    <div style="width: 150px;"></div>
+</nav>
+
+<div class="container main-container">
+    <div class="row g-4">
+        
+        <!-- أولاً: فورمة إضافة عامل جديد -->
+        <div class="col-md-4">
+            <div class="card-custom">
+                <h5 class="fw-bold text-dark mb-3"><i class="fa-solid fa-user-plus text-primary me-1"></i> إضافة عامل جديد</h5>
+                <hr>
+                <form id="addWorkerForm">
+                    <div class="mb-3">
+                        <label for="workerName" class="form-label small fw-bold text-secondary">اسم العامل بالكامل</label>
+                        <input type="text" id="workerName" class="form-control" placeholder="مثال: محمد أحمد علي" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="workerPhone" class="form-label small fw-bold text-secondary">رقم الهاتف (اسم المستخدم)</label>
+                        <input type="tel" id="workerPhone" class="form-control" placeholder="01xxxxxxxxx" required>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <label for="workerPassword" class="form-label small fw-bold text-secondary">كلمة المرور المستهدفة</label>
+                        <input type="text" id="workerPassword" class="form-control" placeholder="أدخل كلمة مرور قوية" required>
+                    </div>
+
+                    <button type="submit" id="saveBtn" class="btn btn-primary w-100 fw-bold">
+                        <i class="fa-solid fa-floppy-disk me-1"></i> حفظ وتفعيل الحساب
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- ثانياً: جدول استعراض العمال الحاليين المحدث حياً -->
+        <div class="col-md-8">
+            <div class="table-container">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h5 class="fw-bold m-0 text-dark">
+                        <i class="fa-solid fa-users text-success me-1"></i> طاقم العمل المسجل حالياً
+                    </h5>
+                    <span class="badge bg-success">مزامنة فورية مفعّلة</span>
+                </div>
+
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle">
+                        <thead class="table-light">
+                            <tr>
+                                <th>اسم العامل</th>
+                                <th>رقم الهاتف</th>
+                                <th>كلمة المرور</th>
+                                <th class="text-center">إجراءات</th>
+                            </tr>
+                        </thead>
+                        <tbody id="workersTableBody">
+                            <tr>
+                                <td colspan="4" class="text-center text-muted py-4">
+                                    <i class="fa-solid fa-spinner fa-spin fa-2x mb-2 d-block"></i> جاري جلب طاقم العمل...
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import { getFirestore, collection, addDoc, onSnapshot, doc, deleteDoc, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+
+    // إعدادات الـ Firebase Config الخاصة بمشروعك
+    const firebaseConfig = {
+        apiKey: "AIzaSyDTQs_H3KOVUkTD-RNnGIIE2nGvOjwf75s",
+        authDomain: "smart-street-dashboard-315dc.firebaseapp.com",
+        projectId: "smart-street-dashboard-315dc",
+        storageBucket: "smart-street-dashboard-315dc.firebasestorage.app",
+        messagingSenderId: "584982507857",
+        appId: "1:584982507857:web:cb0389114b14c23e21e370",
+        measurementId: "G-7TVNFGK93Q"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    const auth = getAuth(app);
+
+    // 🔒 حماية الصفحة: التأكد من أن الزائر هو الآدمن
+    onAuthStateChanged(auth, (user) => {
+        if (!user && !sessionStorage.getItem('adminLoggedIn')) {
+            window.location.href = 'admin_login.html';
+        }
+    });
+
+    const workersCollection = collection(db, "workers");
+
+    // ➕ [عملية الإضافة]: التحقق من عدم التكرار ثم الحفظ في Firestore
+    document.getElementById('addWorkerForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        const name = document.getElementById('workerName').value.trim();
+        const phone = document.getElementById('workerPhone').value.trim();
+        const password = document.getElementById('workerPassword').value.trim();
+        const saveBtn = document.getElementById('saveBtn');
+
+        saveBtn.disabled = true;
+        saveBtn.innerHTML = `<span class="spinner-border spinner-border-sm me-1"></span> جاري الحفظ...`;
+
+        try {
+            // التأكد أولاً من أن رقم الهاتف غير مكرر لضمان منطقية عملية الدخول لاحقاً
+            const q = query(workersCollection, where("phone", "==", phone));
+            const querySnapshot = await getDocs(q);
+            
+            if (!querySnapshot.empty) {
+                alert("عذراً، رقم الهاتف هذا مسجل بالفعل لعامل آخر!");
+                saveBtn.disabled = false;
+                saveBtn.innerHTML = `<i class="fa-solid fa-floppy-disk me-1"></i> حفظ وتفعيل الحساب`;
+                return;
+            }
+
+            // إضافة المستند الجديد لـ Firestore
+            await addDoc(workersCollection, {
+                name: name,
+                phone: phone,
+                password: password,
+                createdAt: new Date().toISOString()
+            });
+
+            alert("تم إضافة وتفعيل حساب العامل بنجاح!");
+            document.getElementById('addWorkerForm').reset();
+
+        } catch (error) {
+            console.error("Error adding worker: ", error);
+            alert("حدث خطأ أثناء محاولة حفظ البيانات.");
+        } finally {
+            saveBtn.disabled = false;
+            saveBtn.innerHTML = `<i class="fa-solid fa-floppy-disk me-1"></i> حفظ وتفعيل الحساب`;
+        }
+    });
+
+    // 🗑️ [عملية الحذف]: حذف الحساب نهائياً من الـ Firestore
+    window.deleteWorker = async function(id, name) {
+        if (confirm(`هل أنت متأكد من رغبتك في إيقاف وحذف حساب العامل: ${name}؟`)) {
+            try {
+                await deleteDoc(doc(db, "workers", id));
+                alert("تم حذف الحساب بنجاح.");
+            } catch (error) {
+                console.error("Error deleting worker: ", error);
+                alert("فشل حذف الحساب من قاعدة البيانات.");
+            }
+        }
+    };
+
+    // 🔄 [المزامنة الحية]: جلب وعرض طاقم العمل بشكل مستمر وتلقائي
+    onSnapshot(workersCollection, (snapshot) => {
+        const tableBody = document.getElementById("workersTableBody");
+        tableBody.innerHTML = "";
+
+        if (snapshot.empty) {
+            tableBody.innerHTML = `<tr><td colspan="4" class="text-center text-muted py-3">لا يوجد عمال مسجلين حالياً بالنظام.</td></tr>`;
+            return;
+        }
+
+        snapshot.forEach((doc) => {
+            const worker = doc.data();
+            const id = doc.id;
+
+            const row = document.createElement("tr");
+            row.innerHTML = `
+                <td class="fw-bold text-dark"><i class="fa-solid fa-user text-muted me-1 small"></i> ${worker.name || 'بدون اسم'}</td>
+                <td><code class="text-secondary">${worker.phone || 'غير محدد'}</code></td>
+                <td><span class="text-monospace">${worker.password || '••••'}</span></td>
+                <td class="text-center">
+                    <button class="btn btn-sm btn-outline-danger" onclick="deleteWorker('${id}', '${worker.name}')">
+                        <i class="fa-solid fa-trash-can"></i> حذف الحساب
+                    </button>
+                </td>
+            `;
+            tableBody.appendChild(row);
+        });
+    });
+</script>
+
+</body>
+</html>
