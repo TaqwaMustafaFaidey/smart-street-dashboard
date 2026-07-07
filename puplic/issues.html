@@ -196,7 +196,7 @@
                         <th>الوصف الفني</th>
                         <th>الخطورة</th>
                         <th>الإحداثيات (GPS)</th>
-                        <th>تغيير الحالة الإدارية</th>
+                        <th>الحالة الإدارية</th>
                     </tr>
                 </thead>
                 <tbody id="issuesTableBody">
@@ -315,18 +315,7 @@
         });
     }
 
-    // تعديل الحالة الإدارية مباشرة في كوليكشن الفايربيز
-    window.changeIssueStatus = async function(id, newStatus) {
-        try {
-            const docRef = doc(db, "infrastructure_issues", id);
-            await updateDoc(docRef, { status: newStatus });
-        } catch (error) {
-            console.error("Error updating status: ", error);
-            alert("فشل تحديث حالة البلاغ بقاعدة البيانات.");
-        }
-    };
-
-    // بناء وعرض جدول البيانات المفلتر والمقسم لصفحات
+    // بناء وعرض جدول البيانات المفلتر والمقسم لصفحات (تم تحويل الحالة إلى شارة ثابتة)
     function renderTable() {
         const tableBody = document.getElementById("issuesTableBody");
         tableBody.innerHTML = "";
@@ -357,6 +346,18 @@
             if (data.severity === "حرجة وعاجلة جداً" || data.severity === "حرجة" || data.severity === "High") severityClass = "badge-severity-high";
             else if (data.severity === "متوسطة الأهمية" || data.severity === "متوسطة" || data.severity === "Medium") severityClass = "badge-severity-medium";
 
+            // تحديد ستايل شارة الحالة الثابتة
+            let statusBadgeClass = "bg-danger-subtle text-danger border border-danger-subtle";
+            let statusText = "🔴 قيد الانتظار";
+
+            if (data.status === "قيد التنفيذ") {
+                statusBadgeClass = "bg-warning-subtle text-warning-emphasis border border-warning-subtle";
+                statusText = "🟡 قيد التنفيذ";
+            } else if (data.status === "تم الإصلاح") {
+                statusBadgeClass = "bg-success-subtle text-success border border-success-subtle";
+                statusText = "🟢 تم الإصلاح";
+            }
+
             const row = document.createElement("tr");
             row.innerHTML = `
                 <td class="fw-bold">${data.issueType || 'غير محدد'}</td>
@@ -365,11 +366,9 @@
                 <td><span class="badge ${severityClass} p-2">${data.severity || 'اعتيادية'}</span></td>
                 <td><code class="text-dark">${data.coordinates || 'لم تلتقط'}</code></td>
                 <td>
-                    <select class="form-select form-select-sm fw-semibold" onchange="changeIssueStatus('${data.id}', this.value)">
-                        <option value="قيد الانتظار" class="text-danger" ${data.status === 'قيد الانتظار' ? 'selected' : ''}>🔴 قيد الانتظار</option>
-                        <option value="قيد التنفيذ" class="text-warning" ${data.status === 'قيد التنفيذ' ? 'selected' : ''}>🟡 قيد التنفيذ</option>
-                        <option value="تم الإصلاح" class="text-success" ${data.status === 'تم الإصلاح' ? 'selected' : ''}>🟢 تم الإصلاح</option>
-                    </select>
+                    <span class="badge ${statusBadgeClass} p-2 d-inline-block fw-bold text-center w-100" style="font-size: 0.85rem;">
+                        ${statusText}
+                    </span>
                 </td>
             `;
             tableBody.appendChild(row);
@@ -458,7 +457,6 @@
                 currentStatus = "تم الإصلاح";
                 resolved++;
             } else {
-                // افتراضي إذا كانت الخانة فارغة
                 pending++;
             }
 
