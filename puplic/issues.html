@@ -19,6 +19,7 @@
             box-shadow: 0 2px 4px rgba(0,0,0,0.02);
             padding: 15px 20px;
         }
+        /* حل مشكلة التحذير في السطر 77 بنقل الستايل المدمج إلى هنا */
         .nav-balancer {
             width: 100px;
         }
@@ -84,7 +85,7 @@
         <small class="text-muted">المنصة المركزية للمناطق الرقمية الذكية</small>
     </div>
     <div>
-        <button id="logout-btn" class="btn btn-outline-danger btn-sm fw-bold"><i class="fa-solid fa-arrow-right-from-bracket"></i> خروج آمن</button>
+        <button class="btn btn-outline-danger btn-sm fw-bold"><i class="fa-solid fa-arrow-right-from-bracket"></i> خروج آمن</button>
     </div>
 </nav>
 
@@ -317,18 +318,6 @@
         document.getElementById("count-resolved").innerText = resolved;
 
         updateCharts({ pending, progress, resolved }, regionStats);
-    });
-
-    // =========================================================
-    // كود تشغيل زر تسجيل الخروج والرجوع لصفحة المواطن الرئيسية
-    // =========================================================
-    document.getElementById('logout-btn').addEventListener('click', () => {
-        // مسح الجلسة المسجلة احتياطياً لضمان قفل الحساب
-        sessionStorage.removeItem('adminLoggedIn');
-        localStorage.removeItem('adminLoggedIn');
-        
-        // التوجيه التلقائي المباشر لصفحة المواطن
-        window.location.href = 'index.html';
     });
 </script>
 

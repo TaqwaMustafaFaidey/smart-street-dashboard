@@ -1,0 +1,72 @@
+/* --- 1. تنسيقات مشتركة (للكل) --- */
+body {
+    font-family: 'Cairo', sans-serif;
+    margin: 0;
+    padding: 0;
+}
+/* --- Admin Dashboard Layout Classes (Used in issues.html) --- */
+
+.dashboard-body {
+    background-color: #f1f5f9;
+}
+
+.dashboard-container {
+    max-width: 1300px; /* Optional: sets a maximum width for the whole dashboard */
+    margin: 0 auto;
+}
+
+.card-block-layout {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.chart-icon-subtle {
+    color: #a0aec0; /* Subtle grayish color for the chart header icons */
+    font-size: 1.1rem;
+}
+
+/* Base style for stat cards */
+.stat-card {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+/* Base style for visual cards (charts, tables) */
+.card-visual {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 25px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.01);
+}
+/* --- 3. تصميم صفحة العمال (Worker Login) --- */
+/* نستخدم كلاس مختلف لصفحة العمال لضمان اختلاف التصميم */
+.worker-login-body {
+    background-color: #f1f5f9; /* خلفية فاتحة للعمال مثلاً */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+}
+
+.worker-card {
+    background: #ffffff;
+    padding: 30px;
+    border-radius: 20px;
+    border: 2px solid #0d9488; /* إطار مميز للعمال */
+    width: 100%;
+    max-width: 350px;
+}
+
+/* --- 4. عناصر مشتركة (لتقليل التكرار) --- */
+.input-field {
+    width: 100%;
+    padding: 10px;
+    margin: 10px 0;
+    border-radius: 5px;
+    border: 1px solid #ccc;
+}
